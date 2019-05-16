@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 一．Java基础
 ============
 
@@ -19,21 +18,6 @@
 
 ### 1.1.2 装箱和拆箱
 
-=======
-## 1  Java的数据类型
-### 1.1  8种基本数据类型
-布尔型: boolean
-
-字符型:char
-
-整数型:byte, short, int, long
-
-浮点数型:float, double
-
-![image](https://raw.githubusercontent.com/LLLRS/git_resource/master/image001.png)
- 
-### 1.2  装箱和拆箱
->>>>>>> 9a65ea7e66629b52cb1374363f4e23c82ee9745e
 自动装箱是Java编译器在基本数据类型和对应的对象包装类型之间做的一个转化。比如：把int转化成Integer，double转化成Double，等等。反之就是自动拆箱。
 
 原始类型: boolean，char，byte，short，int，long，float，double
