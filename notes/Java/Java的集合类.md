@@ -1,7 +1,7 @@
 二．Java的集合类
 ================
 
-![https://images2015.cnblogs.com/blog/820406/201605/820406-20160529134155569-877986274.png](https://raw.githubusercontent.com/LLLRS/git_resource/master//dbcd6216766296a1a9b5053ff1894251.jpg)
+![https://images2015.cnblogs.com/blog/820406/201605/820406-20160529134155569-877986274.png](media/dbcd6216766296a1a9b5053ff1894251.jpg)
 
 2.1 Hashtable
 -------------
@@ -151,7 +151,7 @@ count**++;**
 
 在下面代码中，如果prev为null了，那么说明第一个元素就是要删除的元素，那么就直接指向第一个元素的下一个即可。
 
-![](https://raw.githubusercontent.com/LLLRS/git_resource/master//3974bdbfd0b225c61a1d9772bc7c854e.png)
+![](media/3974bdbfd0b225c61a1d9772bc7c854e.png)
 
 ### 2.1.5 扩容机制
 
@@ -702,7 +702,7 @@ newTab**[**j **+** oldCap**] =** hiHead**;**
 
 但这时候问题就来了，这样就算散列值分布再松散，要是只取最后几位的话，碰撞也会很严重。更要命的是如果散列本身做得不好，分布上成等差数列的漏洞，恰好使最后几个低位呈现规律性重复。**这时候“扰动函数”的价值就体现出来了。**
 
-![](https://raw.githubusercontent.com/LLLRS/git_resource/master//9ab28550cbc32507a85cea984c74dfd1.png)
+![](media/9ab28550cbc32507a85cea984c74dfd1.png)
 
 JDK1.7中的实现对key的hashcode值做了四次扰动，但明显Java
 8觉得扰动做一次就够了，做4次的话，多了可能边际效用也不大，所谓为了效率考虑就改成一次了。**总而言之，上述的hash()方法和indexFor()方法的作用只有一个：保证元素均匀分布到table的每个桶中以便充分利用空间。**
@@ -1070,7 +1070,7 @@ HashMap 不能随时保持遍历顺序和插入顺序一致的问题。除此之
 
 LinkedHashMap的底层实现和HashMap完全一致，只是增加了两个头尾节点来维护一个双向链表:
 
-![](https://raw.githubusercontent.com/LLLRS/git_resource/master//bbc18b5eea9f2d4b2b79d77a6776a839.png)
+![](media/bbc18b5eea9f2d4b2b79d77a6776a839.png)
 
 通过查看源码可知，LinkedHashMap的get、put、resize、remove方法基本过程和HashMap基本一致。一些小细节是通过在LinkedHashMap重写来实现的。主要有以下几点：
 

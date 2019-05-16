@@ -49,7 +49,7 @@
 
 **死亡状态（Dead）：**线程执行完了或者因异常退出了run()方法，该线程结束生命周期。
 
-![https://img-blog.csdn.net/20150309140927553](https://raw.githubusercontent.com/LLLRS/git_resource/master//4aedb9d9d47f02ec77420699a86f22a7.jpg)
+![https://img-blog.csdn.net/20150309140927553](media/4aedb9d9d47f02ec77420699a86f22a7.jpg)
 
 4.3 线程调度
 ------------
@@ -110,7 +110,7 @@ join方法是用于在某一个线程的执行过程中调用另一个线程执�
 
 Thread.interrupt()并不能使得线程被中断，线程还是会执行。最靠谱的方法就是设置一个全局的标记位，然后再Thread中去检查这个标记位，发现标记位改变则中断线程。
 
-![](https://raw.githubusercontent.com/LLLRS/git_resource/master//7b02d3d12c1f34841dc96a2c0a25f592.png)
+![](media/7b02d3d12c1f34841dc96a2c0a25f592.png)
 
 ### 4.3.5 从线程中抛出异常
 
@@ -233,7 +233,7 @@ Model，JMM）的主要目标是定义程序中各个变量的访问规则，**�
 
 Java内存模型中规定了所有的变量都存储在主内存中，每条线程还有自己的工作内存，线程的工作内存中保存了该线程使用到的变量到主内存副本拷贝，线程对变量的所有操作（读取、赋值）都必须在工作内存中进行，而不能直接读写主内存中的变量。不同线程之间无法直接访问对方工作内存中的变量，线程间变量值的传递均需要在主内存来完成，线程、主内存和工作内存的交互关系如下图所示：
 
-![https://images0.cnblogs.com/i/475287/201403/091134177063947.jpg](https://raw.githubusercontent.com/LLLRS/git_resource/master//b7f94146622574758fbe49f9785549ce.jpg)
+![https://images0.cnblogs.com/i/475287/201403/091134177063947.jpg](media/b7f94146622574758fbe49f9785549ce.jpg)
 
 为了获得较好的执行性能，Java内存模型并没有限制执行引擎使用处理器的寄存器或者高速缓存来提升指令执行速度，也没有限制编译器对指令进行重排序。也就是说，在java内存模型中，也会存在缓存一致性问题和指令重排序的问题。
 

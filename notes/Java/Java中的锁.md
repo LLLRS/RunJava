@@ -23,7 +23,7 @@ A。要写入的新值B**。
 **Java
 8推出了一个新的类，LongAdder，他就是尝试使用分段CAS以及自动分段迁移的方式来大幅度提升多线程高并发执行CAS操作的性能！**
 
-![](https://raw.githubusercontent.com/LLLRS/git_resource/master//9a2eb3a0f7caca0fa4e33717087884ac.png)
+![](media/9a2eb3a0f7caca0fa4e33717087884ac.png)
 
 **悲观锁**
 
@@ -45,7 +45,7 @@ A 持有一个锁，并且线程 B 请求这个锁。由于这个线程已经被
 被完全唤醒前获得、使用以及释放这个锁。这样的情况时一种“双赢”的局面：B
 获得锁的时刻并没有推迟，C 更早的获得了锁，并且吞吐量也获得了提高。
 
-![https://blog-pictures.oss-cn-shanghai.aliyuncs.com/15255931517868.jpg](https://raw.githubusercontent.com/LLLRS/git_resource/master//93ef7634eaf36d4c9a8ad277e23d14c4.jpg)
+![https://blog-pictures.oss-cn-shanghai.aliyuncs.com/15255931517868.jpg](media/93ef7634eaf36d4c9a8ad277e23d14c4.jpg)
 
 另一个可能的原因是公平锁线程切换次数要比非公平锁线程切换次数多得多，因此效率上要低一些。
 
@@ -102,7 +102,7 @@ Pointer"：对象指向它的类的元数据的指针，虚拟机通过这个指
 
 32位的HotSpot虚拟机对象头存储结构如下：
 
-![https://images2015.cnblogs.com/blog/584866/201704/584866-20170420091115212-1624858175.jpg](https://raw.githubusercontent.com/LLLRS/git_resource/master//9e2974141f1be5d88523a1aff1eacb41.jpg)
+![https://images2015.cnblogs.com/blog/584866/201704/584866-20170420091115212-1624858175.jpg](media/9e2974141f1be5d88523a1aff1eacb41.jpg)
 
 ### 3.2.2 monitor 
 
@@ -112,7 +112,7 @@ Pointer"：对象指向它的类的元数据的指针，虚拟机通过这个指
 monitor
 被某个线程持有后，它便处于锁定状态。在Java虚拟机(HotSpot)中，monitor是由ObjectMonitor实现的，其主要数据结构如下（位于HotSpot虚拟机源码ObjectMonitor.hpp文件，C++实现的）：
 
-![](https://raw.githubusercontent.com/LLLRS/git_resource/master//208dc9874b6f917427562c8a72e39788.png)
+![](media/208dc9874b6f917427562c8a72e39788.png)
 
 ObjectMonitor中有两个队列，_WaitSet 和
 \_EntryList，用来保存ObjectWaiter对象列表(每个等待锁的线程都会被封装成ObjectWaiter对象)，_owner指向持有ObjectMonitor对象的线程，当多个线程同时访问一段同步代码时，首先会进入
@@ -122,7 +122,7 @@ wait()
 方法，将释放当前持有的monitor，owner变量恢复为null，count自减1，同时该线程进入
 WaitSet集合中等待被唤醒。若当前线程执行完毕也将释放monitor(锁)并复位变量的值，以便其他线程进入获取monitor(锁)。如下图所示:
 
-![](https://raw.githubusercontent.com/LLLRS/git_resource/master//753f5a40efd070b30d36e396d96e9645.png)
+![](media/753f5a40efd070b30d36e396d96e9645.png)
 
 ### 3.2.3 synchronized底层原理
 
@@ -131,7 +131,7 @@ monitor.enter 指令，在退出方法和异常处插入monitor.exit
 的指令。其本质就是对一个对象监视器(Monitor)进行获取，而这个获取过程具有排他性从而达到了同一时刻只能一个线程访问的目的。而对于没有获取到锁的线程将会阻塞到方法入口处，直到获取锁的线程
 monitor.exit之后才能尝试继续获取锁。流程图如下:
 
-![](https://raw.githubusercontent.com/LLLRS/git_resource/master//b7bf23f28c7de6d6e7867cbaac6e29d4.emf)
+![](media/b7bf23f28c7de6d6e7867cbaac6e29d4.emf)
 
 **具体来说：**
 
@@ -178,7 +178,7 @@ Mark Word 更新为指向锁记录的指针。
 Word
 。如果替换成功则说明整个同步操作完成，失败则说明有其他线程尝试获取锁，这时就会唤醒被挂起的线程(此时已经膨胀为重量锁)。
 
-![](https://raw.githubusercontent.com/LLLRS/git_resource/master//6286448d2f5f2cb602cb7113f3bfe545.emf)
+![](media/6286448d2f5f2cb602cb7113f3bfe545.emf)
 
 **自旋锁：**轻量级锁失败后，虚拟机为了避免线程真实地在操作系统层面挂起，还会进行一项称为自旋锁的优化手段。**这是基于在大多数情况下，线程持有锁的时间都不会太长，如果直接挂起操作系统层面的线程可能会得不偿失**，毕竟操作系统实现线程之间的切换时需要从用户态转换到核心态，这个状态之间的转换需要相对比较长的时间，时间成本相对较高，**因此自旋锁会假设在不久将来，当前的线程可以获得锁，**因此虚拟机会让当前想要获取锁的线程做几个空循环(这也是称为自旋的原因)，一般不会太久，可能是50个循环或100循环，在经过若干次循环后，如果得到锁，就顺利进入临界区。如果还不能获得锁，那就会将线程在操作系统层面挂起，这就是自旋锁的优化方式，这种方式确实也是可以提升效率的。最后没办法也就只能升级为重量级锁了。
 
@@ -186,7 +186,7 @@ Word
 
 **不同锁的比较**
 
-![è¿éåå¾çæè¿°](https://raw.githubusercontent.com/LLLRS/git_resource/master//a5379cb3f718cd7763573726ce52ed64.png)
+![è¿éåå¾çæè¿°](media/a5379cb3f718cd7763573726ce52ed64.png)
 
 3.3 ReentrantLock
 -----------------
@@ -200,7 +200,7 @@ ReentrantLock 是基于AQS实现的，AQS
 AQS
 维护了一个基于双向链表的同步队列，线程在获取同步状态失败的情况下，都会被封装成节点，然后加入队列中。同步队列大致示意图如下：
 
-![https://blog-pictures.oss-cn-shanghai.aliyuncs.com/15256142424566.jpg](https://raw.githubusercontent.com/LLLRS/git_resource/master//764c4cb9f6d7115ca743ab9f9583e6d1.jpg)
+![https://blog-pictures.oss-cn-shanghai.aliyuncs.com/15256142424566.jpg](media/764c4cb9f6d7115ca743ab9f9583e6d1.jpg)
 
 在同步队列中，头结点是获取同步状态的节点。其他节点在尝试获取同步状态失败后，会被阻塞住，暂停运行。当头结点释放同步状态后，会唤醒其后继节点。后继节点会将自己设为头节点，并将原头节点从队列中移除。
 
@@ -226,7 +226,7 @@ AQS
 
 **ReentrantLock 和 synchronized 区别**
 
-![](https://raw.githubusercontent.com/LLLRS/git_resource/master//cf1372bc829900ee9ebe3b98521c34d4.png)
+![](media/cf1372bc829900ee9ebe3b98521c34d4.png)
 
 ### 3.3.2 多个线程交替打印
 

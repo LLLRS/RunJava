@@ -3,7 +3,7 @@
 
 JUC包即java.util.concurrent包，是Java提供的一个同步类包。
 
-![](https://raw.githubusercontent.com/LLLRS/git_resource/master//a5822525881f9cbbdff2cd538538ac99.png)
+![](media/a5822525881f9cbbdff2cd538538ac99.png)
 
 **5.1 同步工具类**
 
@@ -283,7 +283,7 @@ Future只是一个接口，不能直接用来创建对象，FutureTask是Future�
 用于执行一个可返回结果的长任务，任务在单独的线程中执行，其他线程可以用 get
 方法取任务结果，如果任务尚未完成，线程在 get 上阻塞。FutureTask的继承图如下:
 
-![http://incdn1.b0.upaiyun.com/2017/06/728ad60436305482476012b9ac99c699.png](https://raw.githubusercontent.com/LLLRS/git_resource/master//54082c5bf8e8163e4fb1072c84687e85.png)
+![http://incdn1.b0.upaiyun.com/2017/06/728ad60436305482476012b9ac99c699.png](media/54082c5bf8e8163e4fb1072c84687e85.png)
 
 **源码分析可看这篇**：<http://www.importnew.com/25286.html>
 
@@ -428,7 +428,7 @@ al **= new** CopyOnWriteArrayList**\<**E**\>();**
 如图所示，ConcurrentHashMap是由Segment 数组、HashEntry 组成，和 HashMap
 一样，仍然是数组加链表。
 
-![https://ws4.sinaimg.cn/large/006tNc79gy1ftj0evlsrgj30dw073gm2.jpg](https://raw.githubusercontent.com/LLLRS/git_resource/master//8802ffa13051fd93161f3a2ee6f2eb8e.jpg)
+![https://ws4.sinaimg.cn/large/006tNc79gy1ftj0evlsrgj30dw073gm2.jpg](media/8802ffa13051fd93161f3a2ee6f2eb8e.jpg)
 
 Segment 是 ConcurrentHashMap 的一个内部类：
 
@@ -784,13 +784,13 @@ table **=** newTable**;**
 1.7 已经解决了并发问题，并且能支持 N 个 Segment 这么多次数的并发，但依然存在
 HashMap 在 1.7 版本中的问题：**那就是查询遍历链表效率太低**。
 
-![2](https://raw.githubusercontent.com/LLLRS/git_resource/master//d10508a4655d6acc7e26bc1e50ac7cfc.png)
+![2](media/d10508a4655d6acc7e26bc1e50ac7cfc.png)
 
 其中抛弃了原有的 Segment 分段锁，而采用了CAS +
 synchronized 来保证并发安全性，也将 1.7 中存放数据的 HashEntry 改为
 Node，但作用都是相同的。其中的 val next 都用了 volatile 修饰，保证了可见性。
 
-![https://ws3.sinaimg.cn/large/006tNc79gy1fthq78e5gqj30nr09mmz9.jpg](https://raw.githubusercontent.com/LLLRS/git_resource/master//d492ad6909c09905de51b046c99b027b.jpg)
+![https://ws3.sinaimg.cn/large/006tNc79gy1fthq78e5gqj30nr09mmz9.jpg](media/d492ad6909c09905de51b046c99b027b.jpg)
 
 **put 方法**
 
@@ -1036,7 +1036,7 @@ key**.**equals**(**ek**))))**
 
 ### 5.3.2 ConcurrentSkipListMap
 
-**看完也不很懂系列：**<https://blog.csdn.net/coslay/article/details/44819823>
+**看完也不很懂系列：***https://blog.csdn.net/coslay/article/details/44819823*
 
 >   <https://www.jianshu.com/p/edc2fd149255>
 
@@ -1051,7 +1051,7 @@ ConcurrentSkipListSet
 
 BlockingQueue是一个队列，还额外支持如下的操作：当获取元素时，如果队列为空，则一直等待直到队列非空。当存储元素时，如果队列中没有空间进行存储，则一直等待直到有空间进行存储。BlockingQueue定义的常用方法如下:
 
-![](https://raw.githubusercontent.com/LLLRS/git_resource/master//41e2624139de35352255a2b1c7a0b8a7.png)
+![](media/41e2624139de35352255a2b1c7a0b8a7.png)
 
 上面就是BlockingQueue接口中提供的方法列表。
 
@@ -1745,7 +1745,7 @@ maxiPoolSize，使用LinkedBlockingQuene作为阻塞队列。特点：即使当�
 
 线程池的状态如下表示：
 
-![https://images2017.cnblogs.com/blog/874963/201801/874963-20180106173322487-368555243.png](https://raw.githubusercontent.com/LLLRS/git_resource/master//ee303233eb0cf4de50329461cdff508c.png)
+![https://images2017.cnblogs.com/blog/874963/201801/874963-20180106173322487-368555243.png](media/ee303233eb0cf4de50329461cdff508c.png)
 
 状态的表示用ctl关键字表示，高三未表示线程池的状态(runState),低29位表示有效的
 
@@ -1807,7 +1807,7 @@ SHUTDOWN： 指调用了 shutdown()
 
 ThreadPoolExecutor是比较核心的一个线程池类，它的继承关系如下：
 
-![https://images2017.cnblogs.com/blog/874963/201801/874963-20180106173027096-1426075077.png](https://raw.githubusercontent.com/LLLRS/git_resource/master//7b663471926809bfa3123ab57f227638.png)
+![https://images2017.cnblogs.com/blog/874963/201801/874963-20180106173027096-1426075077.png](media/7b663471926809bfa3123ab57f227638.png)
 
 Executor是一个顶层接口，在它里面只声明了一个方法execute(Runnable)，返回值为void，参数为Runnable类型，从字面意思可以理解，就是用来执行传进去的任务的。
 
@@ -1823,7 +1823,7 @@ execute()方法实际上是Executor中声明的方法，在ThreadPoolExecutor进
 
 submit()方法是在ExecutorService中声明的方法，在AbstractExecutorService就已经有了具体的实现，在ThreadPoolExecutor中并没有对其进行重写，这个方法也是用来向线程池提交任务的，但是它和execute()方法不同，它能够返回任务执行的结果，去看submit()方法的实现，会**发现它实际上还是调用的execute()方法，只不过它利用了Future来获取任务执行结果。**
 
-源码分析：<https://www.cnblogs.com/crazybit/p/3288086.html>
+源码分析：*https://www.cnblogs.com/crazybit/p/3288086.html*
 
 <https://blog.csdn.net/programmer_at/article/details/79799267>
 
@@ -1893,7 +1893,7 @@ Worker参与者，具体执行Request的工作线程
 
 Request参与者
 
-![](https://raw.githubusercontent.com/LLLRS/git_resource/master//9f373407f86d3dac6f0245ef34171ee5.png)
+![](media/9f373407f86d3dac6f0245ef34171ee5.png)
 
 ### 5.5.6 一个简单的线程池
 
@@ -2070,7 +2070,7 @@ thread**.**interrupt**();**
 
 <https://www.cnblogs.com/nullllun/category/1143499.html>
 
-读写锁：<https://juejin.im/post/5b9df6015188255c8f06923a>
+读写锁：*https://juejin.im/post/5b9df6015188255c8f06923a*
 
 5.7 Atomic包
 ------------
