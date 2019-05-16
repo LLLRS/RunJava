@@ -1,9 +1,13 @@
 ## 1  Java的数据类型
 ### 1.1  8种基本数据类型
-布尔型:          boolean
-字符型:          char
-整数型:          byte, short, int, long
-浮点数型:        float, double
+布尔型: boolean
+
+字符型:char
+
+整数型:byte, short, int, long
+
+浮点数型:float, double
+
 ![image](https://raw.githubusercontent.com/LLLRS/git_resource/master/image001.png)
  
 ### 1.2  装箱和拆箱
