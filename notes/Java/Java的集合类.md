@@ -1,7 +1,7 @@
 Java的集合类
 ================
 
-<div align="center">![](media/dbcd6216766296a1a9b5053ff1894251.jpg)
+![](media/dbcd6216766296a1a9b5053ff1894251.jpg)
 
 1 Hashtable
 -------------
@@ -474,7 +474,7 @@ HashMap 不能随时保持遍历顺序和插入顺序一致的问题。除此之
 
 LinkedHashMap的底层实现和HashMap完全一致，只是增加了两个头尾节点来维护一个双向链表:
 
-<div align="center">![](media/bbc18b5eea9f2d4b2b79d77a6776a839.png)
+![](media/bbc18b5eea9f2d4b2b79d77a6776a839.png)
 
 通过查看源码可知，LinkedHashMap的get、put、resize、remove方法基本过程和HashMap基本一致。一些小细节是通过在LinkedHashMap重写来实现的
 
