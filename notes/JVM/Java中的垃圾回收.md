@@ -6,7 +6,7 @@
 
 >   在Java运行时的数据区里，由JVM管理的内存区域分为下图几个模块：
 
-![C:\\Users\\LLRS\\AppData\\Local\\Microsoft\\Windows\\INetCache\\Content.MSO\\CCCE4910.tmp](media/4664caa1031e24e57434feeb5fa528f9.jpg)
+![](media/4664caa1031e24e57434feeb5fa528f9.jpg)
 
 ### 6.1.1 程序计数器
 
