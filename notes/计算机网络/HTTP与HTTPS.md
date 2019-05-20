@@ -1,3 +1,18 @@
+* [HTTP](#http)
+  * [http请求报文 &amp; http响应报文](#http%E8%AF%B7%E6%B1%82%E6%8A%A5%E6%96%87--http%E5%93%8D%E5%BA%94%E6%8A%A5%E6%96%87)
+  * [9\.1\.2 http 请求方法](#912-http-%E8%AF%B7%E6%B1%82%E6%96%B9%E6%B3%95)
+  * [Get 和 Post 区别](#get-%E5%92%8C-post-%E5%8C%BA%E5%88%AB)
+  * [http状态码](#http%E7%8A%B6%E6%80%81%E7%A0%81)
+  * [长连接 短连接 无状态](#%E9%95%BF%E8%BF%9E%E6%8E%A5-%E7%9F%AD%E8%BF%9E%E6%8E%A5-%E6%97%A0%E7%8A%B6%E6%80%81)
+  * [转发与重定向的区别](#%E8%BD%AC%E5%8F%91%E4%B8%8E%E9%87%8D%E5%AE%9A%E5%90%91%E7%9A%84%E5%8C%BA%E5%88%AB)
+  * [Cookie 与 Session](#cookie-%E4%B8%8E-session)
+    * [cookie和token都存放在header里面，为什么只劫持前者？](#cookie%E5%92%8Ctoken%E9%83%BD%E5%AD%98%E6%94%BE%E5%9C%A8header%E9%87%8C%E9%9D%A2%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8F%AA%E5%8A%AB%E6%8C%81%E5%89%8D%E8%80%85)
+* [HTTPS](#https)
+  * [9\.3\.1 HTTPS的通信过程](#931-https%E7%9A%84%E9%80%9A%E4%BF%A1%E8%BF%87%E7%A8%8B)
+  * [https与http区别](#https%E4%B8%8Ehttp%E5%8C%BA%E5%88%AB)
+  * [9\.3\.4 SSL工作原理](#934-ssl%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86)
+* [浏览器中输入URL到页面加载的发生了什么](#%E6%B5%8F%E8%A7%88%E5%99%A8%E4%B8%AD%E8%BE%93%E5%85%A5url%E5%88%B0%E9%A1%B5%E9%9D%A2%E5%8A%A0%E8%BD%BD%E7%9A%84%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88)
+* [WebSocket](#websocket)
 
 
 HTTP
