@@ -1,3 +1,20 @@
+* [锁的基本概念](#%E9%94%81%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5)
+  * [乐观锁 vs 悲观锁](#%E4%B9%90%E8%A7%82%E9%94%81-vs-%E6%82%B2%E8%A7%82%E9%94%81)
+  * [公平锁 vs 非公平锁](#%E5%85%AC%E5%B9%B3%E9%94%81-vs-%E9%9D%9E%E5%85%AC%E5%B9%B3%E9%94%81)
+  * [独享锁 vs 共享锁](#%E7%8B%AC%E4%BA%AB%E9%94%81-vs-%E5%85%B1%E4%BA%AB%E9%94%81)
+  * [分段锁 vs 可重入锁](#%E5%88%86%E6%AE%B5%E9%94%81-vs-%E5%8F%AF%E9%87%8D%E5%85%A5%E9%94%81)
+* [synchronized](#synchronized)
+  * [对象头](#%E5%AF%B9%E8%B1%A1%E5%A4%B4)
+  * [monitor](#monitor)
+  * [synchronized底层原理](#synchronized%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86)
+  * [自旋锁/偏向锁/轻量级锁/重量级锁](#%E8%87%AA%E6%97%8B%E9%94%81%E5%81%8F%E5%90%91%E9%94%81%E8%BD%BB%E9%87%8F%E7%BA%A7%E9%94%81%E9%87%8D%E9%87%8F%E7%BA%A7%E9%94%81)
+* [ReentrantLock](#reentrantlock)
+  * [ReentrantLock](#reentrantlock-1)
+  * [多个线程交替打印](#%E5%A4%9A%E4%B8%AA%E7%BA%BF%E7%A8%8B%E4%BA%A4%E6%9B%BF%E6%89%93%E5%8D%B0)
+* [Volatile](#volatile)
+  * [Volatile关键字的两层语义](#volatile%E5%85%B3%E9%94%AE%E5%AD%97%E7%9A%84%E4%B8%A4%E5%B1%82%E8%AF%AD%E4%B9%89)
+  * [volatile的原理和实现机制](#volatile%E7%9A%84%E5%8E%9F%E7%90%86%E5%92%8C%E5%AE%9E%E7%8E%B0%E6%9C%BA%E5%88%B6)
+  * [volatile关键字的使用场景](#volatile%E5%85%B3%E9%94%AE%E5%AD%97%E7%9A%84%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF)
 
 
 锁的基本概念
