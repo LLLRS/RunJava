@@ -3,7 +3,7 @@ Java的集合类
 
 ![](media/dbcd6216766296a1a9b5053ff1894251.jpg)
 
-1 Hashtable
+Hashtable
 -------------
 
 > public class Hashtable<K,V> extends Dictionary<K,V> implements Map<K,V>, Cloneable, java.io.Serializable
@@ -61,7 +61,7 @@ protected void rehash() {
 ```
 
 
-2 HashMap
+HashMap
 -----------
 
 ### JDK1.7下的HashMap
@@ -314,7 +314,7 @@ final Node<K,V>[] resize() {
 
 [参见](https://zhangshixi.iteye.com/blog/673143)
 
-3 TreeMap
+TreeMap
 -----------
 
 ### TreeMap实现原理
