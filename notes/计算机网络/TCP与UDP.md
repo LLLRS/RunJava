@@ -1,6 +1,22 @@
+* [UDP](#udp)
+  * [UDP的报文结构](#udp%E7%9A%84%E6%8A%A5%E6%96%87%E7%BB%93%E6%9E%84)
+  * [UDP特性](#udp%E7%89%B9%E6%80%A7)
+  * [UDP的缺陷](#udp%E7%9A%84%E7%BC%BA%E9%99%B7)
+  * [对UDP一次发送多少bytes好](#%E5%AF%B9udp%E4%B8%80%E6%AC%A1%E5%8F%91%E9%80%81%E5%A4%9A%E5%B0%91bytes%E5%A5%BD)
+* [TCP](#tcp)
+  * [TCP的报文格式](#tcp%E7%9A%84%E6%8A%A5%E6%96%87%E6%A0%BC%E5%BC%8F)
+  * [TCP三次握手](#tcp%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B)
+  * [TCP四次挥手](#tcp%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B)
+  * [TCP粘包/拆包问题](#tcp%E7%B2%98%E5%8C%85%E6%8B%86%E5%8C%85%E9%97%AE%E9%A2%98)
+  * [TCP如何保证可靠性传输](#tcp%E5%A6%82%E4%BD%95%E4%BF%9D%E8%AF%81%E5%8F%AF%E9%9D%A0%E6%80%A7%E4%BC%A0%E8%BE%93)
+  * [滑动窗口机制](#%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E6%9C%BA%E5%88%B6)
+  * [TCP状态转移](#tcp%E7%8A%B6%E6%80%81%E8%BD%AC%E7%A7%BB)
+  * [TCP第三次握手失败后怎么办](#tcp%E7%AC%AC%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B%E5%A4%B1%E8%B4%A5%E5%90%8E%E6%80%8E%E4%B9%88%E5%8A%9E)
+  * [TCP当被告知接收窗口为0后的行为](#tcp%E5%BD%93%E8%A2%AB%E5%91%8A%E7%9F%A5%E6%8E%A5%E6%94%B6%E7%AA%97%E5%8F%A3%E4%B8%BA0%E5%90%8E%E7%9A%84%E8%A1%8C%E4%B8%BA)
+  * [一个 TCP 连接上面能发多少 HTTP请求](#%E4%B8%80%E4%B8%AA-tcp-%E8%BF%9E%E6%8E%A5%E4%B8%8A%E9%9D%A2%E8%83%BD%E5%8F%91%E5%A4%9A%E5%B0%91-http%E8%AF%B7%E6%B1%82)
+* [TCP与UDP区别](#tcp%E4%B8%8Eudp%E5%8C%BA%E5%88%AB)
 
 
-![](media/707486bd9bb00900cae36ebb808bae6b.png)
 
 ## UDP
 
