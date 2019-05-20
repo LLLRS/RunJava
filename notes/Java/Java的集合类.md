@@ -3,6 +3,33 @@ Java的集合类
 
 ![](media/dbcd6216766296a1a9b5053ff1894251.jpg)
 
+
+  * [Hashtable](#hashtable)
+  * [HashMap](#hashmap)
+    * [JDK1\.7下的HashMap](#jdk17%E4%B8%8B%E7%9A%84hashmap)
+      * [put方法](#put%E6%96%B9%E6%B3%95)
+    * [JDK1\.8下的HashMap](#jdk18%E4%B8%8B%E7%9A%84hashmap)
+      * [默认的参数](#%E9%BB%98%E8%AE%A4%E7%9A%84%E5%8F%82%E6%95%B0)
+      * [get过程](#get%E8%BF%87%E7%A8%8B)
+      * [put过程](#put%E8%BF%87%E7%A8%8B)
+      * [扩容过程](#%E6%89%A9%E5%AE%B9%E8%BF%87%E7%A8%8B)
+    * [HashSet](#hashset)
+  * [TreeMap](#treemap)
+    * [TreeMap实现原理](#treemap%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86)
+    * [put方法](#put%E6%96%B9%E6%B3%95-1)
+    * [get方法](#get%E6%96%B9%E6%B3%95)
+    * [TreeSet](#treeset)
+  * [LinkedHashMap](#linkedhashmap)
+  * [List类](#list%E7%B1%BB)
+    * [ArrayList](#arraylist)
+    * [LinkedList](#linkedlist)
+    * [Vector](#vector)
+  * [迭代器](#%E8%BF%AD%E4%BB%A3%E5%99%A8)
+    * [Iterator和ListIterator的区别](#iterator%E5%92%8Clistiterator%E7%9A%84%E5%8C%BA%E5%88%AB)
+    * [快速失败(fail\-fast)和安全失败(fail\-safe)的区别](#%E5%BF%AB%E9%80%9F%E5%A4%B1%E8%B4%A5fail-fast%E5%92%8C%E5%AE%89%E5%85%A8%E5%A4%B1%E8%B4%A5fail-safe%E7%9A%84%E5%8C%BA%E5%88%AB)
+
+
+
 Hashtable
 -------------
 
