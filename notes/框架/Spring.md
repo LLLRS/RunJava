@@ -107,7 +107,7 @@ AOP是通过动态代理来实现的，Spring创建代理的规则为：
 
 如果使用spring mvc，那post请求跟put请求有什么区别啊
 
-### 10.1.6 Spring 常用注解
+### Spring 常用注解
 
 **\@Component：**
 标准一个普通的spring Bean类
@@ -246,7 +246,7 @@ MyBatis的强大特性之一便是**它的**[动态SQL](http://www.mybatis.org/m
 
 其执行原理为，使用OGNL从sql参数对象中计算表达式的值，根据表达式的值动态拼接sql，以此来完成动态sql的功能。
 
-### **Mybatis是否支持延迟加载？如果支持，它的实现原理是什么？
+### Mybatis是否支持延迟加载？如果支持，它的实现原理是什么？
 
 答：Mybatis仅支持association关联对象和collection关联集合对象的延迟加载，association指的就是一对一，collection指的就是一对多查询。在Mybatis配置文件中，可以配置是否启用延迟加载lazyLoadingEnabled=true\|false。
 
