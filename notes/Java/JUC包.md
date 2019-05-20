@@ -16,7 +16,7 @@
     * [ArrayBlockingQueue](#arrayblockingqueue)
     * [LinkedBlockingQueue](#linkedblockingqueue)
     * [LinkedBlockingQueue 和ArrayBlockingQueue比较](#linkedblockingqueue-%E5%92%8Carrayblockingqueue%E6%AF%94%E8%BE%83)
-  * [5\.4\.2 ConcurrentLinkedDeque](#542-concurrentlinkeddeque)
+  * [ConcurrentLinkedDeque](#concurrentlinkeddeque)
 * [线程池](#%E7%BA%BF%E7%A8%8B%E6%B1%A0)
   * [线程池工作过程](#%E7%BA%BF%E7%A8%8B%E6%B1%A0%E5%B7%A5%E4%BD%9C%E8%BF%87%E7%A8%8B)
   * [线程池分类](#%E7%BA%BF%E7%A8%8B%E6%B1%A0%E5%88%86%E7%B1%BB)
@@ -925,7 +925,7 @@ public E take() throws InterruptedException {
 
 4.**两者的实现队列添加或移除的锁不一样**，ArrayBlockingQueue实现的队列中的锁是没有分离的，即添加操作和移除操作采用的同一个ReenterLock锁，而LinkedBlockingQueue实现的队列中的锁是分离的，其添加采用的是putLock，移除采用的则是takeLock，这样能大大提高队列的吞吐量，也意味着在高并发的情况下生产者和消费者可以并行地操作队列中的数据，以此来提高整个队列的并发性能。
 
-### 5.4.2 ConcurrentLinkedDeque
+### ConcurrentLinkedDeque
 
 ConcurrentLinkedQueue是一个**无锁化、非阻塞、线程安全**的单向队列，JDK1.5提供，这个类的实现原理来自Michael
 & Scott设计的算法。
