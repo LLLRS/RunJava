@@ -50,7 +50,7 @@ A 持有一个锁，并且线程 B 请求这个锁。由于这个线程已经被
 
 综上：如果线程持锁时间短，则应使用非公平锁，可通过“插队”提升效率。如果线程持锁时间长，“插队”带来的效率提升可能会比较小，此时应使用公平锁。
 
-### 3.1.3 独享锁 vs 共享锁
+### 独享锁 vs 共享锁
 
 >独享锁（互斥锁是指该锁一次只能被一个线程所持有。
 
@@ -62,7 +62,7 @@ ReentrantLock而言，其是独享锁。但是对于Lock的另一个实现类Rea
 
 独享锁与共享锁也是通过AQS来实现的，通过实现不同的方法，来实现独享或者共享。
 
-### 3.1.4 分段锁 vs 可重入锁
+### 分段锁 vs 可重入锁
 
 分段锁其实是一种锁的设计，并不是具体的一种锁，对于ConcurrentHashMap而言，其并发的实现就是通过分段锁的形式来实现高效的并发操作。
 
@@ -77,7 +77,7 @@ ConcurrentHashMap中的分段锁称为Segment，它即类似于HashMap的结构�
 可重入锁又名递归锁，是指在同一个线程在外层方法获取锁的时候，在进入内层方法会自动获取锁。对于ReentrantLock和
 Synchronized都是是一个可重入锁。可重入锁的一个好处是可一定程度避免死锁。
 
-3.2 synchronized
+synchronized
 ----------------
 
 synrhronized关键字简洁、清晰、语义明确，其应用层的语义是可以把任何一个非null对象作为"锁"。synchronized关键字最主要有以下3种应用方式：
@@ -88,7 +88,7 @@ synrhronized关键字简洁、清晰、语义明确，其应用层的语义是�
 
 **修饰代码块**，指定加锁对象，对给定对象加锁，进入同步代码库前要获得给定对象的锁。
 
-### 3.2.1 对象头
+### 对象头
 
 HotSpot虚拟机中，对象在内存中存储的布局可以分为三块区域：对象头（Header）、实例数据（Instance
 Data）和对齐填充（Padding）。HotSpot虚拟机的对象头(Object Header)包括两部分信息:
@@ -103,7 +103,7 @@ Pointer"：对象指向它的类的元数据的指针，虚拟机通过这个指
 
 ![https://images2015.cnblogs.com/blog/584866/201704/584866-20170420091115212-1624858175.jpg](media/9e2974141f1be5d88523a1aff1eacb41.jpg)
 
-### 3.2.2 monitor 
+### monitor 
 
 每个对象都存在着一个 monitor
 与之关联(monitor对象存在于每个Java对象的对象头中)，对象与其 monitor
@@ -123,14 +123,14 @@ WaitSet集合中等待被唤醒。若当前线程执行完毕也将释放monitor
 
 ![](media/753f5a40efd070b30d36e396d96e9645.png)
 
-### 3.2.3 synchronized底层原理
+### synchronized底层原理
 
 synchronized的实现离不开虚拟机JVM的支持，JVM是通过进入、退出对象监视器(monitor)来实现对方法、同步块的同步的。具体实现是在编译之后在同步方法调用前加入一个
 monitor.enter 指令，在退出方法和异常处插入monitor.exit
 的指令。其本质就是对一个对象监视器(Monitor)进行获取，而这个获取过程具有排他性从而达到了同一时刻只能一个线程访问的目的。而对于没有获取到锁的线程将会阻塞到方法入口处，直到获取锁的线程
 monitor.exit之后才能尝试继续获取锁。流程图如下:
 
-![](media/b7bf23f28c7de6d6e7867cbaac6e29d4.emf)
+![](media/b7bf23f28c7de6d6e7867cbaac6e29d4.png)
 
 **具体来说：**
 
@@ -147,7 +147,7 @@ monitor，则该线程进入阻塞状态，直到monitor的进入数为0,再重�
 
 monitor。
 
-### 3.2.4 自旋锁/偏向锁/轻量级锁/重量级锁
+### 自旋锁/偏向锁/轻量级锁/重量级锁
 
 锁的状态总共有四种，无锁状态、偏向锁、轻量级锁和重量级锁(synchronized)。随着锁的竞争，锁可以从偏向锁升级到轻量级锁，再升级的重量级锁，但是锁的升级是单向的，也就是说只能从低到高升级，不会出现锁的降级。锁的状态是保存在**对象头中**。
 
@@ -178,10 +178,10 @@ CAS 比使用互斥开销更少**。但如果锁竞争激烈，轻量锁就不�
 
 ![](media/a5379cb3f718cd7763573726ce52ed64.png)
 
-3.3 ReentrantLock
+ReentrantLock
 -----------------
 
-### 3.3.1 ReentrantLock
+###  ReentrantLock
 
 ReentrantLock 是基于AQS实现的，AQS很好的封装了同步队列的管理，线程的阻塞与唤醒等基础操作。基于 AQS 的同步组件，ReentrantLock 中包含了一个静态抽象类Sync。
 
@@ -215,7 +215,7 @@ AQS维护了一个基于双向链表的同步队列，线程在获取同步状�
 
 ![](media/cf1372bc829900ee9ebe3b98521c34d4.png)
 
-### 3.3.2 多个线程交替打印
+### 多个线程交替打印
 
 ```
 import java.util.concurrent.locks.Lock;
@@ -280,10 +280,10 @@ public class Print {
 
 ```
 
-3.4 Volatile
+Volatile
 ------------
 
-### 3.4.1 Volatile关键字的两层语义
+### Volatile关键字的两层语义
 
 一旦一个共享变量（类的成员变量、类的静态成员变量）被volatile修饰之后，那么就具备了两层语义：
 
@@ -303,7 +303,7 @@ public class Print {
 
 第二：在进行指令优化时，不能将在对volatile变量访问的语句放在其后面执行，也不能把volatile变量后面的语句放到其前面执行。
 
-### 3.4.2 volatile的原理和实现机制
+###  volatile的原理和实现机制
 
 观察加入volatile关键字和没有加入volatile关键字时所生成的汇编代码发现，加入volatile关键字时，会多出一个**lock前缀指令**---深入理解Java虚拟机。
 
