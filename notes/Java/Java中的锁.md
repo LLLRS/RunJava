@@ -315,7 +315,7 @@ Volatile
 
 3.如果是写操作，它会导致其他CPU中对应的缓存行无效。
 
-### 3.4.3 volatile关键字的使用场景
+### volatile关键字的使用场景
 
 synchronized关键字是防止多个线程同时执行一段代码，那么就会很影响程序执行效率，而volatile关键字在某些情况下性能要优于synchronized，但是要注意**volatile关键字是无法替代synchronized关键字的，因为volatile关键字无法保证操作的原子性**（volatile可以保证可见性，可见性只能保证每次读取的是最新的值，但是volatile没办法保证对变量的操作的原子性）。通常来说，使用volatile必须具备以下2个条件：
 
