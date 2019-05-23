@@ -35,11 +35,11 @@ chaining）来解决键冲突：每个哈希表节点都有一个next指针，�
 
 >   Redis的发布与订阅（发布/订阅）是它的一种消息通信模式，一方发送信息，一方接收信息。下图是三个客户端同时订阅同一个频道。
 
-![https://img-blog.csdnimg.cn/20181224163405400](media/9fc4ef4042e6927fb20e0b60a9281740.png)
+![](media/9fc4ef4042e6927fb20e0b60a9281740.png)
 
 下图是有新信息发送给频道1时，就会将消息发送给订阅它的三个客户端：
 
-![https://img-blog.csdnimg.cn/20181224163405417](media/de254d956041a06f12d467c39dbc77e1.png)
+![](media/de254d956041a06f12d467c39dbc77e1.png)
 
 ### 持久化机制
 
