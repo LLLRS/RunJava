@@ -17,19 +17,82 @@ Redis使用单线程的IO复用模型。
 Redis一共支持五种数据类型：string（字符串），hash（哈希），list（列表），set（集合）和zset（sorted
 set有序集合）。
 
-1、String：Strings就是一个最最简单的Key-Value形式存储的变量。其中Value既可以是数字也可以是字符串。其实现方式是在Redis内部默认存储一个字符串，被redisObject引用，当检测到数字操作如自增自减incr、decr等等命令时，自动转化为数字进行计算，计算完毕后再转化为String存储起来。
+#### String
+String就是一个最最简单的Key-Value形式存储的变量。其中Value既可以是数字也可以是字符串，其实现方式是在Redis内部默认存储一个字符串，被redisObject引用，当检测到数字操作如自增自减incr、decr等等命令时，自动转化为数字进行计算，计算完毕后再转化为String存储起来。
 
-2、Hash:Hash存储是键值对的value。即Key-Hash，而Hash又是一个k-v的结构，如果使用的Memcached，则需要把整个Hash打包存储在内存中，如果需要查询其中某个值，还要全部取出整个Hash，再查找对应值。而Redis可以直接通过命令获取到Value，大大提高了性能。
-其实现原理：当成员较少时，Redis为了节约内存会采用类似一维数组的紧凑存储，而当对象较多时，则直接转为HashMap存储。
+Redis的字符串叫着「SDS」，也就是Simple Dynamic String。它的结构是一个带长度信息的字节数组。
 
-> Redis的哈希表使用链地址法（separate
-chaining）来解决键冲突：每个哈希表节点都有一个next指针，多个哈希表节点可以用next指针构成一个单向链表，被分配到同一个索引上的多个节点可以用这个单向链表连接起来，这就解决了键冲突的问题。（每次都是在头部插入）
+```
+struct sdshdr {
+    int len;       //len表示buf已使用的长度
+    int free;      //free表示buf未使用的长度
+    char buf[];   //buf表示字节数组，用来存储字符串
+};
+```
 
-3、Set：Set是一个无序的天然去重的集合，即Key-Set。此外还提供了交集、并集等一系列直接操作集合的方法，对于求共同好友、共同关注什么的功能实现特别方便。其底层是靠HashMap实现的，其中value为null；
+SDS结构的优点：
+* 保存了字符串的长度
+* 减少了修改字符串带来的内存重分配次数：空间预分配（字符串在长度小于 1M 之前，扩容空间采用加倍策略。当长度超过 1M 之后，为了避免加倍后的冗余空间过大而导致浪费，每次扩容只会多分配 1M 大小的冗余空间）和惰性空间释放（需要缩减空间时并不马上内存重分配，而是把可用空间纪录下来）
+* 可以保存二进制数据
 
-4、List：List是一个有序可重复的集合，其遵循FIFO的原则，底层是依赖双向链表实现的，因此支持正向、反向双重查找。通过List，我们可以很方面的获得类似于最新回复这类的功能实现。
+字符串对象的内部编码有两种形式：在长度特别短时，使用 emb 形式存储 (embeded)，否则使用 raw 形式存储。embstr 存储形式是这样一种存储形式，它将 RedisObject 对象头和 SDS 对象连续存在一起，使用 malloc 方法一次分配。而 raw 存储形式不一样，它需要两次 malloc，两个对象头在内存地址上一般是不连续的。
 
-5、SortedSet：类似于java中的TreeSet，是Set的可排序版。此外还支持优先级排序，维护了一个score的参数来实现。其底层主要依赖HashMap来实现的，通过维持插入的数值和Score优先级的映射来进行排序。
+![](https://raw.githubusercontent.com/LLLRS/git_resource/master/1111rfvzvsvs.PNG)
+
+#### 字典
+字典（dict）是 Redis 服务器中出现最为频繁的复合型数据结构，除了 hash 结构的数据会用到字典外，整个 Redis 数据库的所有 key 和 value 也组成了一个全局字典，还有带过期时间的 key 集合也是一个字典。zset 集合中存储 value 和 score 值的映射关系也是通过 dict 结构实现的。
+
+dict结构内部包含两个 hashtable，通常情况下只有一个 hashtable 是有值的。但是在 dict 扩容缩容时，需要分配新的 hashtable，然后进行渐进式搬迁，这时候两个 hashtable 存储的分别是旧的 hashtable 和新的 hashtable。待搬迁结束后，旧的 hashtable 被删除，新的 hashtable 取而代之。
+
+dict是通过哈希表来实现的，它的结构和 Java 的 HashMap 几乎是一样的，都是通过分桶的方式解决 hash 冲突。第一维是数组，第二维是链表。数组中存储的是第二维链表的第一个元素的指针。
+```
+struct dictEntry {
+    void* key;
+    void* val;
+    dictEntry* next; // 链接下一个 entry
+}
+struct dictht {
+    dictEntry** table; // 二维
+    long size; // 第一维数组的长度
+    long used; // hash 表中的元素个数
+    ...
+}
+```
+
+**渐进式rehash** : 大字典的扩容是比较耗时间的，需要重新申请新的数组，然后将旧字典所有链表中的元素重新挂接到新的数组下面，这是一个O(n)级别的操作，作为单线程的Redis表示很难承受这样耗时的过程，所以Redis使用渐进式rehash小步搬迁。虽然慢一点，但是肯定可以搬完。搬迁操作埋伏在当前字典的后续指令中(来自客户端的hset/hdel指令等)，但是有可能客户端闲下来了，没有了后续指令来触发这个搬迁，Redis还会在定时任务中对字典进行主动搬迁。
+
+
+**扩容条件** 
+: 正常情况下，当 hash 表中元素的个数等于第一维数组的长度时，就会开始扩容，扩容的新数组是原数组大小的 2 倍。不过如果 Redis 正在做 bgsave，为了减少内存页的过多分离 (Copy On Write)，Redis 尽量不去扩容 (dict_can_resize)，但是如果 hash 表已经非常满了，元素的个数已经达到了第一维数组长度的 5 倍 (dict_force_resize_ratio)，说明 hash 表已经过于拥挤了，这个时候就会强制扩容。
+
+
+**缩容条件** 
+:当 hash 表因为元素的逐渐删除变得越来越稀疏时，Redis 会对 hash 表进行缩容来减少 hash 表的第一维数组空间占用。缩容的条件是元素个数低于数组长度的 10%。缩容不会考虑 Redis 是否正在做 bgsave。
+
+**对象的内部编码有两种形式**
+：压缩列表(ziplist)和 哈希表。只有同时满足下面两个条件时，才会使用压缩列表：哈希中元素数量小于512个以及哈希中所有键值对的键和值字符串长度都小于64字节。如果有一个条件不满足，则使用哈希表，且编码只可能由压缩列表转化为哈希表，反方向则不可能。
+
+压缩列表是一块连续的内存空间，元素之间紧挨着存储，没有任何冗余空隙。压缩列表可以节省内存空间，但是进行修改或增删操作时，复杂度较高。
+
+
+
+#### List
+列表（list）用来存储多个有序的字符串，每个字符串称为元素；一个列表可以存储2^32-1个元素。Redis中的列表支持两端插入和弹出，并可以获得指定位置（或范围）的元素，可以充当数组、队列、栈等。
+
+列表的内部编码可以是压缩列表（ziplist）或双端链表（linkedlist）。虑到链表的附加空间相对太高，另外每个节点的内存都是单独分配，会加剧内存的碎片化，影响内存管理效率，后续版本对列表数据结构进行了改造，使用 quicklist 代替了 ziplist 和 linkedlist。quicklist 是 ziplist 和 linkedlist 的混合体，它将 linkedlist 按段切分，每一段使用 ziplist 来紧凑存储，多个 ziplist 之间使用双向指针串接起来。
+
+![](https://raw.githubusercontent.com/LLLRS/git_resource/master/1ecfvcsfhbg.PNG)
+
+#### Set
+Redis 的集合相当于 Java 语言里面的 HashSet，它内部的键值对是无序的唯一的。它的内部实现相当于一个特殊的字典，字典中所有的 value 都是一个值NULL。
+当集合中最后一个元素移除之后，数据结构自动删除，内存被回收。
+
+#### Zset
+zset 可能是 Redis 提供的最为特色的数据结构。它类似于 Java 的 SortedSet 和 HashMap 的结合体，一方面它是一个 set，保证了内部 value 的唯一性，另一方面它可以给每个 value 赋予一个 score，代表这个 value 的排序权重。它的内部实现用的是一种叫做「跳跃列表」的数据结构。zset 中最后一个 value 被移除后，数据结构自动删除，内存被回收.
+
+跳跃表是一种有序数据结构，通过在每个节点中维持多个指向其他节点的指针，从而达到快速访问节点的目的。除了跳跃表，实现有序数据结构的另一种典型实现是平衡树；大多数情况下，跳跃表的效率可以和平衡树媲美，且跳跃表实现比平衡树简单很多，因此redis中选用跳跃表代替平衡树。跳跃表支持平均O(logN)、最坏O(N)的复杂点进行节点查找，并支持顺序操作。Redis的跳跃表实现由zskiplist和zskiplistNode两个结构组成：前者用于保存跳跃表信息（如头结点、尾节点、长度等），后者用于表示跳跃表节点。具体结构相对比较复杂，略。
+
+![](https://raw.githubusercontent.com/LLLRS/git_resource/master/12dfavklovcnb.PNG)
 
 ### 发布与订阅
 
