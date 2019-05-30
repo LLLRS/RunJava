@@ -190,11 +190,63 @@ acquire()，然后再获取该许可。每个 release()
 
 括增加请求到许可的线程，也就是说Semaphore不是可重入的。每一次请求一个许可都会导致计数器减少1，同样每次释放一个许可都会导致计数器增加1，一旦达到了0，新的许可请求线程将被挂起。
 
-Semaphore默认实现一个非公平的NonfairSync类，也就是对于任何申请许可的线程来说，**都是第一时间看是否有多余的许可，如果有则给此线程，**如果没有则进队列排队等待，而不是此线程直接进AQS队列排队等待按顺序来拿到许可，利用此间隙来分配许可可以提高并发量。但是会引发一个问题：越活跃的线程越能够拿到许可，造成“饥渴死”现象。
+Semaphore默认实现一个非公平的NonfairSync类，也就是对于任何申请许可的线程来说，**都是第一时间看是否有多余的许可，如果有则给此线程**，如果没有则进队列排队等待，而不是此线程直接进AQS队列排队等待按顺序来拿到许可，利用此间隙来分配许可可以提高并发量。但是会引发一个问题：越活跃的线程越能够拿到许可，造成“饥渴死”现象。
 
 Semaphore类是委托给实现了**AQS类**的Sync类的两个子类FairSync、NonFairSync来实现的。
 
-源码分析可看这篇：<https://blog.csdn.net/u010412719/article/details/52104409>
+#### Semaphore的应用-限流器
+
+```
+// 用信号量实现限流器
+class ObjPool<T, R> {
+    final List<T> pool;
+    
+    final Semaphore sem;
+    // 构造函数
+    ObjPool(int size, T t){
+        pool = new Vector<T>(){};
+        for(int i=0; i<size; i++){
+            pool.add(t);
+        }
+        sem = new Semaphore(size);
+    }
+
+
+
+    // 利用对象池的对象，调用 func
+    public R exec(Function<T,R> func) {
+        T t = null;
+        try {
+            sem.acquire();
+            t = pool.remove(0);
+            return func.apply(t);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            pool.add(t);
+            sem.release();
+        }
+        
+        return null;
+    }
+
+
+    public static void main(String[] args) {
+        // 创建对象池
+        ObjPool<Integer, String> pool =  new ObjPool<Integer, String>(10, 2);
+        
+        // 通过对象池获取 t，之后执行
+        pool.exec(t -> {
+            System.out.println(t);
+            return t.toString();
+        });
+    }
+}
+```
+
+>对象池的例子中，对象保存在了 Vector 中，Vector 是 Java 提供的线程安全的容器，如果把 Vector 换成 ArrayList，是否可以呢？答案是不可以，Semaphore可以允许多个线程访问一个临界区，那就意味着可能存在多个线程同时访问ArrayList，而ArrayList不是线程安全的，所以对象池的例子中是不能够将Vector换成ArrayList的。Semaphore允许多个线程访问一个临界区，这也是一把双刃剑，当多个线程进入临界区时，如果需要访问共享变量就会存在并发问题，所以必须加锁，也就是说Semaphore需要锁中锁。
+
+
 
 ### FutureTask
 
