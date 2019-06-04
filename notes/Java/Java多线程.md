@@ -475,9 +475,23 @@ Copy-on-Write是一项非常通用的技术方案，在很多领域都有着广�
 #### 线程本地存储模式
 多个线程同时读写同一共享变量存在并发问题，但是没有共享变量也不会有并发问题。也就是说如果每个线程都拥有自己的变量，彼此之间不共享，也就没有并发问题了。
 除了局部变量可以做到避免共享外，Java语言提供的线程本地存储（ThreadLocal）。Java的实现里面也有每个线程有一个内部有一个私有属性threadLocals，其类型就是ThreadLocalMap，ThreadLocalMap的Key是ThreadLocal。
+![](media/1258jhvsavgkvbkgk433.png)
 
+在Java的实现方案里面，ThreadLocal仅仅是一个代理工具类，内部并不持有任何与线程相关的数据，所有和线程相关的数据都存储在Thread里面，这样的设计容易理解。而从数据的亲缘性上来讲，ThreadLocalMap属于Thread也更加合理。当然还有一个更加深层次的原因，那就是不容易产生内存泄露。而Java的实现中Thread持有ThreadLocalMap，而且ThreadLocalMap里对ThreadLocal的引用还是弱引用（WeakReference），所以只要Thread对象可以被回收，那么ThreadLocalMap就能被回收。
 
+Java的ThreadLocal实现应该称得上深思熟虑了，不过即便如此深思熟虑，还是不能百分百地让程序员避免内存泄露，例如在线程池中使用ThreadLocal，如果不谨慎就可能导致内存泄露。
 
+在线程池中使用ThreadLocal为什么可能导致内存泄露呢？原因就出在线程池中线程的存活时间太长，往往
+都是和程序同生共死的，这就意味着Thread持有的ThreadLocalMap一直都不会被回收，再加上
+ThreadLocalMap中的Entry对ThreadLocal是弱引用（WeakReference），所以只要ThreadLocal结束了自己
+的生命周期是可以被回收掉的。但是Entry中的Value却是被Entry强引用的，所以即便Value的生命周期结束
+了，Value也是无法被回收的，从而导致内存泄露。那在线程池中，该如何正确使用ThreadLocal呢？其实很简单，既然JVM不能做到自动释放对Value的强引用，那使用try{}finally{}手动释放就可以了。
+
+线程本地存储模式本质上是一种避免共享的方案，由于没有共享，所以自然也就没有并发问题。如果需要
+在并发场景中使用一个线程不安全的工具类，最简单的方案就是避免共享。避免共享有两种方案，一种方案
+是将这个工具类作为局部变量使用，另外一种方案就是线程本地存储模式。这两种方案，局部变量方案的缺
+点是在高并发场景下会频繁创建对象，而线程本地存储方案，每个线程只需要创建一个工具类的实例，所以
+不存在频繁创建对象的问题。
 
 
 
