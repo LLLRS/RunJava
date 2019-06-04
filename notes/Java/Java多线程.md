@@ -475,6 +475,7 @@ Copy-on-Write是一项非常通用的技术方案，在很多领域都有着广�
 #### 线程本地存储模式
 多个线程同时读写同一共享变量存在并发问题，但是没有共享变量也不会有并发问题。也就是说如果每个线程都拥有自己的变量，彼此之间不共享，也就没有并发问题了。
 除了局部变量可以做到避免共享外，Java语言提供的线程本地存储（ThreadLocal）。Java的实现里面也有每个线程有一个内部有一个私有属性threadLocals，其类型就是ThreadLocalMap，ThreadLocalMap的Key是ThreadLocal。
+
 ![](media/1258jhvsavgkvbkgk433.png)
 
 在Java的实现方案里面，ThreadLocal仅仅是一个代理工具类，内部并不持有任何与线程相关的数据，所有和线程相关的数据都存储在Thread里面，这样的设计容易理解。而从数据的亲缘性上来讲，ThreadLocalMap属于Thread也更加合理。当然还有一个更加深层次的原因，那就是不容易产生内存泄露。而Java的实现中Thread持有ThreadLocalMap，而且ThreadLocalMap里对ThreadLocal的引用还是弱引用（WeakReference），所以只要Thread对象可以被回收，那么ThreadLocalMap就能被回收。
@@ -492,6 +493,133 @@ ThreadLocalMap中的Entry对ThreadLocal是弱引用（WeakReference），所以�
 是将这个工具类作为局部变量使用，另外一种方案就是线程本地存储模式。这两种方案，局部变量方案的缺
 点是在高并发场景下会频繁创建对象，而线程本地存储方案，每个线程只需要创建一个工具类的实例，所以
 不存在频繁创建对象的问题。
+
+
+#### Guarded Suspension模式
+
+多线程编程中，往往将一个任务分解为不同的部分，将其交由不同的线程来执行，这些线程相互协作的时候，会出现一个线程等待另一个线程一定操作过后才能进行的情景，这个时候就需要这个线程退出执行。
+
+ Suspension是“挂起”、“暂停”的意思，而Guarded则是“保护”的意思，连在一起就是**保护性地暂停**：当线程在访问某个对象时，
+发现条件不满足，就暂时挂起等待条件满足时再次访问。
+
+下图就是Guarded Suspension模式的结构图，非常简单，一个对象GuardedObject，内部有一个成员变量
+——受保护的对象，以及两个成员方法——get(Predicate<T> p)和onChanged(T obj)方法。GuardedObject的核心是：get()
+方法通过条件变量的await()方法实现等待，onChanged()方法通过条件变量的signalAll()方法实现唤醒功能。
+ 
+ ![](https://raw.githubusercontent.com/LLLRS/git_resource/master/12ghvsvhshjjvj.png)
+ 
+下面的示例代码是扩展Guarded Suspension模式的实现，扩展
+后的GuardedObject内部维护了一个Map，其Key是消息id，而Value是GuardedObject对象实例，同时
+增加了静态方法create()和fireEvent()；create()方法用来创建一个GuardedObject对象实例，并根据key值将
+其加入到Map中，而fireEvent()方法则是根据id唤醒对应的GuardedObject对象。
+
+
+```
+public class GuardedObject<T>{
+    //受保护的对象
+    T obj;
+    final Lock lock = new ReentrantLock();
+    final Condition done = lock.newCondition();
+    final int timeout=1;
+    
+      //保存所有GuardedObject 主要用于区分不同的消息
+    final static Map<Object, GuardedObject> gos=new ConcurrentHashMap<>();
+    //静态⽅法创建GuardedObject
+    static <K> GuardedObject create(K key){
+        GuardedObject go=new GuardedObject();
+        gos.put(key, go);
+        return go;
+    }
+
+    static <K, T> void fireEvent(K key, T obj){
+        GuardedObject go=gos.remove(key);
+        if (go != null){
+            go.onChanged(obj);
+        }
+    }
+    
+    //获取受保护对象
+    T get(Predicate<T> p) {
+        lock.lock();
+        try {
+            //MESA管程推荐写法
+            while(!p.test(obj)){
+                done.await(timeout, TimeUnit.SECONDS);
+            }
+        }catch(InterruptedException e){
+            throw new RuntimeException(e);
+        }finally{
+            lock.unlock();
+        }
+
+        //返回⾮空的受保护对象
+        return obj;
+    }
+    
+    
+    //事件通知⽅法
+    void onChanged(T obj) {
+        lock.lock();
+        try {
+            this.obj = obj;
+            done.signalAll();
+        } finally {
+            lock.unlock();
+        }
+    }
+}
+
+```
+
+
+Guarded Suspension模式本质上是一种等待唤醒机制的实现，只不过Guarded Suspension模式将其规范化
+了。规范化的好处是你无需重头思考如何实现，也无需担心实现程序的可理解性问题。
+
+
+#### Thread-Per-Message
+
+Thread-Per-Message模式是一种最简单实用的分工方法，简言之就是为每个任务分配一个独立的线程。比如一个HTTP Server，很显然只能在主线程中接收请求，而不能处理HTTP请求，因为如果在主线程中处理HTTP请求的话，那同一时间只能处理一个请求，太慢了！可以利用代办的思路，创建一个子线程，委托子线程去处理HTTP请求。
+
+Thread-Per-Message模式的一个最经典的应用场景是网络编程里服务端的实现，服务端为每个客户端请求
+创建一个独立的线程，当线程处理完请求后，自动销毁，这是一种最简单的并发处理网络请求的方法。但是这种实现方案是不具备可行
+性的，原因在于Java中的线程是一个重量级的对象，创建成本很高，一方面创建线程比较耗时，另一方面线
+程占用的内存也比较大。所以，为每个请求创建一个新的线程并不适合高并发场景。但是Thread-Per-Message模式作为一种最简单的分工方案，Java语言支持不了，显然是Java语言本身的问题。
+
+Java语言里，Java线程是和操作系统线程一一对应的，这种做法本质上是将Java线程的调度权完全委托给操
+作系统，而操作系统在这方面非常成熟，所以这种做法的好处是稳定、可靠，但是也继承了操作系统线程的
+缺点：创建成本高。为了解决这个缺点，Java并发包里提供了线程池等工具类。这个思路在很长一段时间里
+都是很稳妥的方案，但是这个方案并不是唯一的方案。
+
+业界还有另外一种方案，叫做轻量级线程。这个方案在Java领域知名度并不高，但是在其他编程语言里却叫
+得很响，例如Go语言、Lua语言里的协程，本质上就是一种轻量级的线程。轻量级的线程，创建的成本很
+低，基本上和创建一个普通对象的成本相似；并且创建的速度和内存占用相比操作系统线程至少有一个数量
+级的提升，所以基于轻量级线程实现Thread-Per-Message模式就完全没有问题了。
+
+#### WorkerThread模式
+
+Worker Thread模式能避免线程频繁创建、销毁的问题，而且能够限制线程的最大数量。Java语言里可以直
+接使用线程池来实现Worker Thread模式，线程池是一个非常基础和优秀的工具类，甚至有些大厂的编码规
+范都不允许用new Thread()来创建线程的，必须使用线程池。
+
+不过使用线程池还是需要格外谨慎的，除了要了解如何正确创建线程池、如何避免线程死锁问题，
+还需要注意使用ThreadLocal内存泄露问题。同时对于提交到线程池的任务，还要做好异常
+处理，避免异常的任务从眼前溜走，从业务的角度看，有时没有发现异常的任务后果往往都很严重。
+
+
+此外，使用线程池过程中，还要注意一种线程死锁的场景。如果提交到相同线程池的任务不是相互独立的，而是有依赖关系的，那么就有可能导致线程死锁。具体现象是应用每运行一段时间偶尔就会处于无响应的状态，监控数据看上去一切都正常，但是实际上已经不能正常工作了。有一个可能的原因是由于线程池中线程数目过少，导致相互依赖的线程不能执行，这种情况下最简单粗暴的办法就是将线程池的最大线程数调大，如果能够确定任务
+的数量不是非常多的话，这个办法也是可行的，否则这个办法就行不通了。其实这种问题通用的解决方案是
+为不同的任务创建不同的线程池。
+
+
+
+
+
+
+
+
+
+
+
 
 
 
