@@ -11,13 +11,9 @@
 
 1、**TCP 连接数限制**
 
-对于同一个域名，浏览器最多只能同时创建 6~8 个 TCP 连接 (不同浏览器不一样)。为了解决数量限制，出现了 `域名分片` 技术，其实就是资源分域，将资源放在不同域名下 (比如二级子域名下)，这样就可以针对不同域名创建连接并请求，以一种讨巧的方式突破限制，但是滥用此技术也会造成很多问题，比如每个 TCP 连接本身需要经过 DNS 查询、三步握手、慢启动等，还占用额外的 CPU 和内存，对于服务器来说过多连接也容易造成网络拥挤、交通阻塞等，对于移动端来说问题更明显，可以参考这篇文章: [Why Domain Sharding is Bad News for Mobile Performance and Users](https://link.juejin.im?target=http%3A%2F%2Fdev.mobify.com%2Fblog%2Fdomain-sharding-bad-news-mobile-performance%2F)
+对于同一个域名，浏览器最多只能同时创建 6~8 个 TCP 连接 (不同浏览器不一样)。为了解决数量限制，出现了 `域名分片` 技术，其实就是资源分域，将资源放在不同域名下 (比如二级子域名下)，这样就可以针对不同域名创建连接并请求，以一种讨巧的方式突破限制，但是滥用此技术也会造成很多问题，比如每个 TCP 连接本身需要经过 DNS 查询、三步握手、TCP 慢启动、TLS 握手等，还占用额外的 CPU 和内存，对于服务器来说过多连接也容易造成网络拥挤、交通阻塞等。
 
-![image](https://user-gold-cdn.xitu.io/2018/8/31/1658dc4aba66d424?imageView2/0/w/1280/h/960/format/webp/ignore-error/1)
 
-![image](https://user-gold-cdn.xitu.io/2018/8/31/1658dc4c0371bfda?imageView2/0/w/1280/h/960/format/webp/ignore-error/1)
-
-在图中可以看到新建了六个 TCP 连接，每次新建连接 DNS 解析需要时间(几 ms 到几百 ms 不等)、TCP 慢启动也需要时间、TLS 握手又要时间，而且后续请求都要等待队列调度
 
 2、**[线头阻塞 (Head Of Line Blocking)](https://link.juejin.im?target=https%3A%2F%2Fzh.wikipedia.org%2Fwiki%2F%25E9%2598%259F%25E5%25A4%25B4%25E9%2598%25BB%25E5%25A1%259E) 问题**
 
@@ -35,27 +31,8 @@
 
 帧是数据传输的最小单位，以二进制传输代替原本的明文传输，原本的报文消息被划分为更小的数据帧:
 
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1105" height="291"></svg>)
+![image](https://user-gold-cdn.xitu.io/2018/8/31/1658dc4b44118517?imageView2/0/w/1280/h/960/format/webp/ignore-error/1)
 
-h1 和 h2 的报文对比:
-
-![image](https://user-gold-cdn.xitu.io/2018/8/31/1658dc4b6cd4a1f9?imageView2/0/w/1280/h/960/format/webp/ignore-error/1)
-
-![image](https://user-gold-cdn.xitu.io/2018/8/31/1658dc4b5f730d3e?imageView2/0/w/1280/h/960/format/webp/ignore-error/1)
-
-图中 h2 的报文是重组解析过后的，可以发现一些头字段发生了变化，而且所有头字段均小写
-
-> `strict-transport-security: max-age=63072000; includeSubdomains` 字段是服务器开启 [HSTS 策略](https://link.juejin.im?target=https%3A%2F%2Fzh.wikipedia.org%2Fwiki%2FHTTP%25E4%25B8%25A5%25E6%25A0%25BC%25E4%25BC%25A0%25E8%25BE%2593%25E5%25AE%2589%25E5%2585%25A8)，让浏览器强制使用 HTTPS 进行通信，可以减少重定向造成的额外请求和会话劫持的风险
-
-> 服务器开启 HSTS 的方法是: 以 nginx 为例，在相应站点的 server 模块中添加 `add_header Strict-Transport-Security "max-age=63072000; includeSubdomains" always;` 即可
-
-> 在 Chrome 中可以打开 `chrome://net-internals/#hsts` 进入浏览器的 HSTS 管理界面，可以增加 / 删除 / 查询 HSTS 记录，比如下图:
-
-> ![image](https://user-gold-cdn.xitu.io/2018/8/31/1658dc4c557a4354?imageView2/0/w/1280/h/960/format/webp/ignore-error/1)
-
-> 在 HSTS 有效期内且 TLS 证书仍有效，浏览器访问 blog.wangriyu.wang 会自动加上 https:// ，而不需要做一次查询重定向到 https
-
-关于帧详见: [How does it work ？- 帧](#%E5%B8%A7-Frame)
 
 #### 2、多路复用 (MultiPlexing)
 
@@ -65,11 +42,6 @@ h1 和 h2 的报文对比:
 
 所以 http2 对于同一域名只需要创建一个连接，而不是像 http/1.1 那样创建 6~8 个连接:
 
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="981" height="616"></svg>)
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="981" height="540"></svg>)
-
-关于流详见: [How does it work ？- 流](#%E6%B5%81-Stream)
 
 #### 3、服务端推送 (Server Push)
 
@@ -82,13 +54,12 @@ Server-Push 主要是针对资源内联做出的优化，相较于 http/1.1 资�
 - 推送资源可以由不同页面共享
 - 服务器可以按照优先级推送资源
 
-关于服务端推送详见: [How does it work ？- Server-Push](#Server-Push)
 
 #### 4、Header 压缩 (HPACK)
 
 使用 [HPACK](https://link.juejin.im?target=https%3A%2F%2Fhttpwg.org%2Fspecs%2Frfc7541.html) 算法来压缩首部内容
 
-关于 HPACK 详见: [How does it work ？- HPACK](#HPACK-%E7%AE%97%E6%B3%95)
+
 
 #### 5、应用层的重置连接
 
@@ -102,7 +73,7 @@ HTTP/2 里的每个 stream 都可以设置依赖 (Dependency) 和权重，可以
 
 每个 http2 流都拥有自己的公示的流量窗口，它可以限制另一端发送数据。对于每个流来说，两端都必须告诉对方自己还有足够的空间来处理新的数据，而在该窗口被扩大前，另一端只被允许发送这么多数据。
 
-关于流量控制详见: [How does it work ？- 流量控制](#%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6)
+
 
 #### 8、HTTP/1 的几种优化可以弃用
 
@@ -125,7 +96,7 @@ HTTP/2 里的每个 stream 都可以设置依赖 (Dependency) 和权重，可以
     +=+=============================================================+
     |                   Frame Payload (0...)                      ...
     +---------------------------------------------------------------+
-    复制代码
+
 
 - `Length` 代表整个 frame 的长度，用一个 24 位无符号整数表示。除非接收者在 SETTINGS_MAX_FRAME_SIZE 设置了更大的值 (大小可以是 2^14(16384) 字节到 2^24-1(16777215) 字节之间的任意值)，否则数据长度不应超过 2^14(16384) 字节。头部的 9 字节不算在这个长度里
 - `Type` 定义 frame 的类型，用 8 bits 表示。帧类型决定了帧主体的格式和语义，如果 type 为 unknown 应该忽略或抛弃。
@@ -156,7 +127,7 @@ HTTP/2 里的每个 stream 都可以设置依赖 (Dependency) 和权重，可以
      +---------------------------------------------------------------+
      |                           Padding (*)                       ...
      +---------------------------------------------------------------+
-    复制代码
+
 
 - `Pad Length`: ? 表示此字段的出现时有条件的，需要设置相应标识 (set flag)，指定 Padding 长度，存在则代表 PADDING flag 被设置
 - `Data`: 传递的数据，其长度上限等于帧的 payload 长度减去其他出现的字段长度
@@ -167,13 +138,7 @@ DATA 帧有如下标识 (flags):
 - END_STREAM: bit 0 设为 1 代表当前流的最后一帧
 - PADDED: bit 3 设为 1 代表存在 Padding
 
-例子:
 
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="815"></svg>)
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="815"></svg>)
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="815"></svg>)
 
 #### HEADERS 帧格式
 
@@ -188,7 +153,7 @@ DATA 帧有如下标识 (flags):
      +---------------------------------------------------------------+
      |                           Padding (*)                       ...
      +---------------------------------------------------------------+
-    复制代码
+
 
 - `Pad Length`: 指定 Padding 长度，存在则代表 PADDING flag 被设置
 - `E`: 一个比特位声明流的依赖性是否是排他的，存在则代表 PRIORITY flag 被设置
@@ -204,11 +169,7 @@ HEADERS 帧有以下标识 (flags):
 - PADDED: bit 3 设为 1 代表 Pad 被设置，存在 Pad Length 和 Padding
 - PRIORITY: bit 5 设为 1 表示存在 Exclusive Flag (E), Stream Dependency, 和 Weight
 
-例子:
 
-![image](https://user-gold-cdn.xitu.io/2018/8/31/1658dc4f02819508?imageView2/0/w/1280/h/960/format/webp/ignore-error/1)
-
-![image](https://user-gold-cdn.xitu.io/2018/8/31/1658dc4ea9053f02?imageView2/0/w/1280/h/960/format/webp/ignore-error/1)
 
 #### 首部的压缩与解压缩
 
@@ -225,11 +186,10 @@ HTTP/2 里的首部字段也是一个键具有一个或多个值。这些首部�
 
 必须将首部块作为连续的帧序列传送，不能插入任何其他类型或其他流的帧。尾帧设置 END_HEADERS 标识代表首部块结束，这让首部块在逻辑上等价于一个单独的帧。接收端连接片段重组首部块，然后解压首部块重建首部列表。
 
-![image](https://user-gold-cdn.xitu.io/2018/8/31/1658dc4d654dbe12?imageView2/0/w/1280/h/960/format/webp/ignore-error/1)
+
 
 #### SETTINGS 帧格式
 
-[httpwg.org/specs/rfc75…](https://link.juejin.im?target=https%3A%2F%2Fhttpwg.org%2Fspecs%2Frfc7540.html%23SETTINGS)
 
 一个 SETTINGS 帧的 payload 由零个或多个参数组成，每个参数的形式如下:
 
@@ -238,7 +198,7 @@ HTTP/2 里的首部字段也是一个键具有一个或多个值。这些首部�
      +-------------------------------+-------------------------------+
      |                        Value (32)                             |
      +---------------------------------------------------------------+
-    复制代码
+
 
 - `Identifier`: 代表参数类型，比如 SETTINGS_HEADER_TABLE_SIZE 是 0x1
 - `Value`: 相应参数的值
@@ -293,7 +253,7 @@ GOAWAY 帧带有最大的那个流标识符 (比如图中第 29 帧是最大流)
 
 #### 流的状态
 
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1167" height="614"></svg>)
+![image](https://user-gold-cdn.xitu.io/2018/8/31/1658dc4f199f3191?imageView2/0/w/1280/h/960/format/webp/ignore-error/1)
 
 > 注意图中的 send 和 recv 对象是指端点，不是指当前的流
 
@@ -308,15 +268,6 @@ GOAWAY 帧带有最大的那个流标识符 (比如图中第 29 帧是最大流)
   - 在服务端该新流会由空闲 `idle` 状态进入被保留的 (本地) `reserved(local)` 状态
   - 在客户端该新流会由空闲 `idle` 状态进入被保留的 (远端) `reserved(remote)` 状态
 
-> 在 [3.2 - Starting HTTP/2 for "http" URIs](https://link.juejin.im?target=https%3A%2F%2Fhttpwg.org%2Fspecs%2Frfc7540.html%23discover-http) 中介绍了一种特殊情况:
->
-> > 客户端发起一个 HTTP/1.1 请求，请求带有 Upgrade 机制，想创建 h2c 连接，服务端同意升级返回 101 响应。 升级之前发送的 HTTP/1.1 请求被分配一个流标识符 0x1，并被赋予默认优先级值。从客户端到服务端这个流 1 隐式地转为 "half-closed" 状态，因为作为 HTTP/1.1 请求它已经完成了。HTTP/2 连接开始后，流 1 用于响应。详细过程可以看下文的 [HTTP/2 的协议协商机制](#HTTP-2-%E7%9A%84%E5%8D%8F%E8%AE%AE%E5%8D%8F%E5%95%86%E6%9C%BA%E5%88%B6)
-
-此状态下接收到 HEADERS 和 PRIORITY 以外的帧被视为 PROTOCOL_ERROR
-
-状态图中 `send PP` 和 `recv PP` 是指连接的双方端点发送或接收了 PUSH_PROMISE，不是指某个空闲流发送或接收了 PUSH_PROMISE，是 PUSH_PROMISE 的出现促使一个预示的流从 `idle` 状态转为 `reserved`
-
-> 在下文 [Server-Push](#Server-Push) 中会详细介绍服务端推送的内容和 PUSH_PROMISE 的使用情形
 
 ##### reserved (local) / reserved (remote)
 
@@ -382,7 +333,7 @@ PUSH_PROMISE 预示的流由 `idle` 状态进入此状态，代表准备进行 S
 
 下面看两个例子来理解流状态:
 
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="866" height="749"></svg>)
+![image](https://user-gold-cdn.xitu.io/2018/8/31/1658dc4f32767fb6?imageView2/0/w/1280/h/960/format/webp/ignore-error/1)
 
 (1)、Server 在 Client 发起的一个流上发送 PUSH_PROMISE 帧，其 Promised Stream ID 指定一个预示流用于后续推送，send PP 后这个预示流在服务端从 idle 状态转为 reserve(local) 状态，客户端 recv PP 后这个流从 idle 状态转为 reserve(remote) 状态
 
@@ -394,7 +345,7 @@ PUSH_PROMISE 预示的流由 `idle` 状态进入此状态，代表准备进行 S
 
 (7)、如果一切顺利，资源随着数据帧响应完毕，最后一帧会带上 END_STREAM 标识代表这个流结束了，此时流转为 closed 状态
 
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="766" height="756"></svg>)
+![image](https://user-gold-cdn.xitu.io/2018/8/31/1658dc4f58e6679e?imageView2/0/w/1280/h/960/format/webp/ignore-error/1)
 
 (1)、客户端发起请求，首先发送一个 HEADERS 帧，其 Stream Identifier 创建一个新流，此流从 idle 状态转为 open 状态
 
@@ -439,7 +390,7 @@ HTTP/1.1 Upgrade to HTTP/2 时响应的流 ID 是 0x1，在升级完成之后，
         A                 A
        / \      ==>      /|\
       B   C             B D C
-    复制代码
+
 
 独占标识 (exclusive) 允许插入一个新层级(新的依赖关系)，独占标识导致该流成为父级的唯一依赖流，而其他依赖流变为其子级，比如同样插入一个新依赖流 E (带有 exclusive):
 
@@ -448,7 +399,7 @@ HTTP/1.1 Upgrade to HTTP/2 时响应的流 ID 是 0x1，在升级完成之后，
        /|\      ==>       E
       B D C              /|\
                         B D C
-    复制代码
+
 
 在依赖关系树中，只有当一个依赖流所依赖的所有流(父级最高为 0x0 的链)被关闭或者无法继续在上面执行，这个依赖流才应该被分配资源
 
@@ -469,7 +420,7 @@ PRIORITY 帧内容与 HEADERS 帧的优先级模块相同:
      +-+-------------+-----------------------------------------------+
      |   Weight (8)  |
      +-+-------------+
-    复制代码
+
 
 - 如果父级重新设置了优先级，则依赖流会随其父级流一起移动。若调整优先级的流带有独占标识，会导致新的父流的所有子级依赖于这个流
 
@@ -487,7 +438,6 @@ PRIORITY 帧内容与 HEADERS 帧的优先级模块相同:
         |                                     |             |
         F                                     E             E
                    (intermediate)   (non-exclusive)    (exclusive)
-    复制代码
 
 ##### 流优先级的状态管理
 
@@ -511,7 +461,7 @@ X 的资源为 1，ABCD 初始权重均为 16，\*号代表节点当前不可用
 
 
      R(C)=16/(16+16)=1/2 ==>  R(C)=8/(8+16)=1/3
-    复制代码
+
 
 可能向一个流创建依赖关系的优先级信息还在传输中，那个流就已经关闭了。如果一个依赖流的依赖指向没有相关优先级信息(即父节点无效)，则这个依赖流会分配默认优先级，这可能会造成不理想的优先级，因为给流分配了不在预期的优先级。
 
@@ -542,7 +492,7 @@ Pushed 流初始依赖于相关的流(见 Server-Push)。
      +---------------------------------------------------------------+
      |                           Padding (*)                       ...
      +---------------------------------------------------------------+
-    复制代码
+
 
 - `Pad Length`: 指定 Padding 长度，存在则代表 PADDING flag 被设置
 - `R`: 保留的 1bit 位
@@ -567,63 +517,9 @@ PUSH_PROMISE 帧准备推送的响应总是和来自于客户端的请求相关�
 
 一旦客户端收到了 PUSH_PROMISE 帧，并选择接收被推送的响应，客户端就不应该为准备推送的响应发起任何请求，直到预示的流被关闭以后。
 
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="815"></svg>)
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="815"></svg>)
-
-> 注意图中推送的四个资源各预示了一个流 (Promised Stream ID)，而发送 PUSH_PROMISE 帧的还是在客户端发起的请求流 (Stream Identifier = 1) 上，客户端收到 PUSH_PROMISE 帧并选择接收便不会对这四个资源发起请求，之后服务端会发起预示的流然后推送资源相关的响应
 
 不管出于什么原因，如果客户端决定不再从服务端接收准备推送的响应，或者如果服务端花费了太长时间准备发送被预示的响应，客户端可以发送一个 RST_STREAM 帧，该帧可以使用 CANCEL 或者 REFUSED_STEAM 码，并引用被推送的流标识符。
 
-#### nginx 配置 Server-Push
-
-> server-push 需要服务端设置，并不是说浏览器发起请求，与此请求相关的资源服务端就会自动推送
-
-以 nginx 为例，从版本 1.13.9 开始正式支持 hppt2 serverpush 功能，
-
-在相应 server 或 location 模块中加入 `http2_push` 字段加上相对路径的文件即可在请求该资源时推送相关资源，比如我的博客设置如下，访问首页时有四个文件会由服务器主动推送过去而不需要客户端请求:
-
-      server_name  blog.wangriyu.wang;
-      root /blog;
-      index index.html index.htm;
-
-      location = /index.html {
-        http2_push /css/style.css;
-        http2_push /js/main.js;
-        http2_push /img/yule.jpg;
-        http2_push /img/avatar.jpg;
-      }
-    复制代码
-
-通过浏览器控制台可以查看 `Push` 响应:
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1012" height="397"></svg>)
-
-也可以用 `nghttp` 测试 push 响应 (\* 号代表是服务端推送的):
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="717" height="567"></svg>)
-
-上面 `http2_push` 的设置适合静态资源，服务端事先知道哪些文件是客户端需要的，然后选择性推送
-
-假如是后台应用动态生成的文件(比如 json 文件)，服务器事先不知道要推送什么，可以用 `Link` 响应头来做自动推送
-
-在 server 模块中添加 `http2_push_preload on;`
-
-      server_name  blog.wangriyu.wang;
-      root /blog;
-      index index.html index.htm;
-
-      http2_push_preload on;
-    复制代码
-
-然后设置响应头 (add_header) 或者后台程序生成数据文件返回时带上响应头 Link 标签，比如
-
-    Link: </style.css>; as=style; rel=preload, </main.js>; as=script; rel=preload, </image.jpg>; as=image; rel=preload
-    复制代码
-
-nginx 会根据 Link 响应头主动推送这些资源
-
-更多 nginx 官方介绍见 [Introducing HTTP/2 Server Push with NGINX 1.13.9](https://link.juejin.im?target=https%3A%2F%2Fwww.nginx.com%2Fblog%2Fnginx-1-13-9-http2-server-push%2F)
 
 #### Server-Push 潜在的问题
 
@@ -658,7 +554,7 @@ Server-Push 满足条件时便会发起推送，可是客户端已经有缓存�
     +-+-------------------------------------------------------------+
     |R|                Window Size Increment (31)                   |
     +-+-------------------------------------------------------------+
-    复制代码
+ 
 
 Window Size Increment 表示除了现有的流量控制窗口之外，发送端还可以传送的字节数。取值范围是 1 到 2^31 - 1 字节。
 
@@ -711,99 +607,26 @@ WINDOW_UPDATE 可以由发送过带有 END_STREAM 标志的帧的对端发送。
      Connection: Upgrade, HTTP2-Settings
      Upgrade: h2c
      HTTP2-Settings: <base64url encoding of HTTP/2 SETTINGS payload>
-    复制代码
+
 
 服务器如果支持 http/2 并同意升级，则转换协议，否则忽略
 
     HTTP/1.1 101 Switching Protocols
     Connection: Upgrade
     Upgrade: h2c
-    复制代码
+
 
 此时潜在的存在一个流 0x1，客户端上这个流在完成 h1 请求后便转为 `half-closed` 状态，服务端会用这个流返回响应
 
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="800" height="600"></svg>)
 
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="800" height="600"></svg>)
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="800" height="600"></svg>)
-
-注意图中第一个响应所在的流是 0x1，与上文所说的一致
 
 目前浏览器只支持 TLS 加密下的 HTTP/2 通信，所以上述情况在浏览器中目前是不可能碰到的，图中显示的是 nghttp 客户端发起的请求
 
-#### 加密的协商机制 \- h2
 
-TLS 加密中在 Client-Hello 和 Server-Hello 的过程中通过 [ALPN](https://link.juejin.im?target=https%3A%2F%2Fzh.wikipedia.org%2Fwiki%2F%25E5%25BA%2594%25E7%2594%25A8%25E5%25B1%2582%25E5%258D%258F%25E8%25AE%25AE%25E5%258D%258F%25E5%2595%2586) 进行协议协商
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="815"></svg>)
-
-应用层协议协商在 TLS 握手第一步的扩展中，Client Hello 中客户端指定 ALPN Next Protocol 为 h2 或者 http/1.1 说明客户端支持的协议
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="815"></svg>)
-
-服务端如果在 Server Hello 中选择 h2 扩展，说明协商协议为 h2，后续请求响应跟着变化；如果服务端未设置 http/2 或者不支持 h2，则继续用 http/1.1 通信
-
-### 分析实例
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="815"></svg>)
-
-196: TLS 握手第一步 Client Hello，开始协议协商，且此处带上了 Session Ticket
-
-200: Server Hello 同意使用 h2，而且客户端的会话票证有效，恢复会话，握手成功
-
-202: 客户端也恢复会话，开始加密后续消息
-
-205: 服务端发起一个连接前言 (SETTINGS)，SETTINGS 帧中设置了最大并行流数量、初始窗口大小、最大帧长度，然后 (WINDOW_UPDATE) 扩大窗口大小
-
-310: 客户端也发送一个连接前言 Magic，并初始化设置 (SETTINGS)，SETTINGS 帧中设置了 HEADER TABLE 大小、初始窗口大小、最大并行流数量，然后 (WINDOW_UPDATE) 扩大窗口大小
-
-311: 客户端发送完连接前言后可以立即跟上一个请求，GET / (HEADERS\[1\])，而且这个 HEADERS 帧还带有 END_STREAM，这会使流 1 从 idle 状态立即转为 half-closed(local) 状态 (open 是中间态)
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="490" height="431"></svg>)
-
-311: 此消息中还包含一个客户端发送给服务端的带 ACK 的 SETTINGS 帧
-
-312: 服务端也响应带 ACK 的 SETTINGS 帧
-
-321: 服务端在流 1 (此时状态为 half-closed(remote)) 上发送了四个 PUSH_PROMISE 帧，它们分别保留了流 2、4、6、8 用于后续推送，
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="808" height="769"></svg>)
-
-321: 此消息中还返回了上面请求的响应 (HEADERS - DATA)，最后 DATA 带上 END_STREAM，流 1 从 half-closed 转为 closed
-
-329: 调整流优先级，依赖关系: 8 -> 6 -> 4 -> 2 -> 1 (都带有独占标志，而且权重均为 110)
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="486" height="661"></svg>)
-
-342: 流 1 关闭后，流 2 得到分配资源，服务器开始推送，数据由两个 DATA 帧返回
-
-344: 流 2 结束，开始推送流 4
-
-356: 调整依赖关系
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="488" height="543"></svg>)
-
-      1         1         1         1(w: 110)
-      |         |         |         |
-      2         2         2         2(w: 110)
-      |         |         |         |
-      4   ==>   4   ==>   6   ==>   6(w: 147)
-      |         |         |         |
-      6         8         4         8(w: 147)
-      |         |         |         |
-      8         6         8         4(w: 110)
-    复制代码
-
-367、369、372: 推送 6 和 8 的流数据
-
-377: 发起一个请求，打开流 3，其中客户端发起的请求都是依赖流 0x0
-
-之后都是同样的套路完成请求 \- 响应，最后以 GOAWAY 帧关闭连接结束
 
 ### HPACK 算法
 
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1266" height="600"></svg>)
+![image](https://user-gold-cdn.xitu.io/2018/8/31/1658dc53114a2ab9?imageView2/0/w/1280/h/960/format/webp/ignore-error/1)
 
 上图来自 Ilya Grigorik 的 PPT - [HTTP/2 is here, let's optimize!](#references)
 
@@ -815,65 +638,6 @@ TLS 加密中在 Client-Hello 和 Server-Hello 的过程中通过 [ALPN](https:/
 
 静态索引表是固定的，对于客户端服务端都一样，目前协议商定的静态索引包含 61 个键值，详见 [Static Table Definition - RFC 7541](https://link.juejin.im?target=https%3A%2F%2Fhttpwg.org%2Fspecs%2Frfc7541.html%23static.table.definition)
 
-比如前几个如下
-
-索引
-
-字段值
-
-键值
-
-index
-
-Header Name
-
-Header Value
-
-1
-
-:authority
-
-2
-
-:method
-
-GET
-
-3
-
-:method
-
-POST
-
-4
-
-:path
-
-/
-
-5
-
-:path
-
-/index.html
-
-6
-
-:scheme
-
-http
-
-7
-
-:scheme
-
-https
-
-8
-
-:status
-
-200
 
 ##### 动态索引
 
@@ -884,8 +648,7 @@ https
 大小均以字节为单位，动态索引表的大小等于所有条目大小之和，每个条目的大小 = 字段长度 \+ 键值长度 \+ 32
 
 > 这个额外的 32 字节是预估的条目开销，比如一个条目使用了两个 64-bit 指针分别指向字段和键值，并使用两个 64-bit 整数来记录字段和键值的引用次数
->
-> golang 实现也是加上了 32: [golang.org/x/net/http2…](https://link.juejin.im?target=https%3A%2F%2Fgithub.com%2Fgolang%2Fnet%2Fblob%2Fdb08ff08e8622530d9ed3a0e8ac279f6d4c02196%2Fhttp2%2Fhpack%2Fhpack.go%23L61)
+
 
 SETTING 帧规定了动态表的最大大小，但编码器可以另外选择一个比 SETTINGS_HEADER_TABLE_SIZE 小的值作为动态表的有效负载量
 
@@ -896,7 +659,7 @@ SETTING 帧规定了动态表的最大大小，但编码器可以另外选择一
     +---+---+---+---+---+---+---+---+
     | 0 | 0 | 1 |   Max size (5+)   |
     +---+---------------------------+
-    复制代码
+
 
 前缀 001 代表此字节为 `dynamic table size update` 信号，后面使用 **N=5 的整数编码方法**表示新的最大动态表容量(不能超过 SETTINGS_HEADER_TABLE_SIZE)，其计算方法下文会介绍。
 
@@ -907,7 +670,7 @@ SETTING 帧规定了动态表的最大大小，但编码器可以另外选择一
 1.  每当出现表大小更新的信号时，需要判断并驱逐队尾的条目，即旧的索引，直到当前大小小于等于新的容量
 2.  每当插入新条目时，需要判断并驱逐队尾的条目，直到当前大小小于等于容量。这个情形下插入一个比 Max size 还大的新条目不会视作错误，但其结果是会清空动态索引表
 
-> 关于动态索引表如何管理的，推荐看下 golang 的实现: [golang.org/x/net/http2…](https://link.juejin.im?target=https%3A%2F%2Fgithub.com%2Fgolang%2Fnet%2Fblob%2Fdb08ff08e8622530d9ed3a0e8ac279f6d4c02196%2Fhttp2%2Fhpack%2Fhpack.go%23L157)，通过代码能更明白这个过程
+
 
 ##### 索引地址空间
 
@@ -921,7 +684,7 @@ SETTING 帧规定了动态表的最大大小，但编码器可以另外选择一
                              ⍋                   |
                              |                   ⍒
                       Insertion Point      Dropping Point
-    复制代码
+
 
 目前 s 就是 61，而有新键值要插入动态索引表时，从 index 62 开始插入队列，所以动态索引表中索引从小到大依次存着从新到旧的键值
 
@@ -938,496 +701,13 @@ HPACK 编码使用两种原始类型: 无符号可变长度整数和八位字节
     +---+---+---+---+---+---+---+---+
     | ? | ? | ? |       Value       |
     +---+---+---+-------------------+
-    复制代码
 
-如果要编码的整数值 X 大于等于 2^N - 1，前缀字节的可用比特位都设成 1，然后把 X 减去 2^N - 1 得到值 R，并用一个或多个字节序列表示 R，字节序列中每个字节的最高有效位 (msb) 用于表示是否结束，**msb 设为 0 时代表是最后一个字节**。具体编码看下面的伪代码和例子
 
-    +---+---+---+---+---+---+---+---+
-    | ? | ? | ? | 1   1   1   1   1 |
-    +---+---+---+-------------------+
-    | 1 |    Value-(2^N-1) LSB      |
-    +---+---------------------------+
-                   ...
-    +---+---------------------------+
-    | 0 |    Value-(2^N-1) MSB      |
-    +---+---------------------------+
-    复制代码
+如果要编码的整数值 X 大于等于 2^N - 1，前缀字节的可用比特位都设成 1，然后把 X 减去 2^N - 1 得到值 R，并用一个或多个字节序列表示 R，字节序列中每个字节的最高有效位 (msb) 用于表示是否结束，**msb 设为 0 时代表是最后一个字节**。
 
-编码:
-
-    if I < 2^N - 1, encode I on N bits
-    else
-        encode (2^N - 1) on N bits
-        I = I - (2^N - 1)
-        while I >= 128
-             encode (I % 128 + 128) on 8 bits
-             I = I / 128
-        encode I on 8 bits
-    复制代码
-
-解码:
-
-    decode I from the next N bits
-    if I < 2^N - 1, return I
-    else
-        M = 0
-        repeat
-            B = next octet
-            I = I + (B & 127) * 2^M
-            M = M + 7
-        while B & 128 == 128
-        return I
-    复制代码
-
-比如使用 N=5 的整数编码表示 1337:
-
-1337 大于 31 (2^5 - 1), 将前缀字节后五位填满 1
-
-I = 1337 - (2^5 - 1) = 1306
-
-I 仍然大于 128, I % 128 = 26, 26 + 128 = 154
-
-154 二进制编码: 10011010, 这即是第一个后跟字节
-
-I = 1306 / 128 = 10, I 小于 128, 循环结束
-
-将 I 编码成二进制: 00001010, 这即是最后一个字节
-
-    +---+---+---+---+---+---+---+---+
-    | X | X | X | 1 | 1 | 1 | 1 | 1 |  Prefix = 31, I = 1306
-    | 1 | 0 | 0 | 1 | 1 | 0 | 1 | 0 |  1306 >= 128, encode(154), I=1306/128=10
-    | 0 | 0 | 0 | 0 | 1 | 0 | 1 | 0 |  10 < 128, encode(10), done
-    +---+---+---+---+---+---+---+---+
-    复制代码
-
-解码时读取第一个字节，发现后五位 (11111) 对应的值 I 等于 31(>= 2^N - 1)，说明还有后跟字节；令 M=0，继续读下一个字节 B，I = I + (B & 127) _ 2^M = 31 + 26 _ 1 = 57，M = M + 7 = 7，最高有效位为 1，表示字节序列未结束，B 指向下一个字节；I = I + (B & 127) _ 2^M = 57 + 10 _ 128 = 1337，最高有效位为 0，表示字节码结束，返回 I
-
-> 这里也可以这样处理 1306: 1306 = 0x51a = (0101 0001 1010)B，将 bit 序列从低到高按 7 个一组分组，则有第一组 001 1010，第二组 000 1010，加上最高有效位 0/1 便与上面的后跟字节对应
-
-##### 字符编码
-
-一个字符串可能代表 Header 条目的字段或者键值。字符编码使用字节序列表示，要么直接使用字符的八位字节码要么使用哈夫曼编码。
-
-    +---+---+---+---+---+---+---+---+
-    | H |    String Length (7+)     |
-    +---+---------------------------+
-    |  String Data (Length octets)  |
-    +-------------------------------+
-    复制代码
-
-- H: 一个比特位表示是否使用哈夫曼编码
-- String Length: 代表字节序列长度，即 String Data 的长度，使用 N=7 的整数编码方式表示
-- String Data: 字符串的八位字节码序列表示，如果 H 为 0，则此处就是原字符的八位字节码表示；如果 H 为 1，则此处为原字符的哈夫曼编码
-
-RFC 7541 给出了一份字符的哈夫曼编码表: [Huffman Code](https://link.juejin.im?target=https%3A%2F%2Fhttpwg.org%2Fspecs%2Frfc7541.html%23huffman.code)，这是基于大量 HTTP 首部数据生成的哈夫曼编码。
-
-- 当中第一列 (sym) 表示要编码的字符，最后的特殊字符 “EOS” 代表字符串结束
-- 第二列 (code as bits) 是二进制哈夫曼编码，向最高有效位对齐
-- 第三列 (code as hex) 是十六进制哈夫曼编码，向最低有效位对齐
-- 最后一列 (len) 代表编码长度，单位 bit
-
-使用哈夫曼编码可能存在编码不是整字节的，会在后面填充 1 使其变成整字节
-
-比如下面的例子:
-
-![Literal Header Field with Incremental Indexing - Indexed Name](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="560" height="181"></svg>)
-
-`:authority: blog.wangriyu.wang` 首部对应的编码为:
-
-    41 8e 8e 83 cc bf 81 d5    35 86 f5 6a fe 07 54 df
-    复制代码
-
-`Literal Header Field with Incremental Indexing — Indexed Name` 的编码格式见下文
-
-41 (0100 0001) 表示字段存在索引值 1，即对应静态表中第一项 :authority
-
-8e (1000 1110) 最高有效位为 1 表示键值使用哈夫曼编码，000 1110 表示字节序列长度为 14
-
-后面 `8e 83 cc bf 81 d5 35 86 f5 6a fe 07 54 df` 是一段哈夫曼编码序列
-
-由哈夫曼编码表可知 100011 -> 'b', 101000 -> 'l', 00111 -> 'o', 100110 -> 'g', 010111 -> '.', 1111000 -> 'w', 00011 -> 'a', 101010 -> 'n', 100110 -> 'g', 101100 -> 'r', 00110 -> 'i', 1111010 -> 'y', 101101 -> 'u'
-
-    8e 83 cc bf 81 d5 35 86 f5 6a fe 07 54 df
-                             |
-                             ⍒
-    1000 1110 1000 0011 1100 1100 1011 1111 1000 0001 1101 0101 0011 0101 1000 0110 1111 0101 0110 1010 1111 1110 0000 0111 0101 0100 1101 1111
-                             |
-                             ⍒
-    100011 101000 00111 100110 010111 1111000 00011 101010 100110 101100 00110 1111010 101101 010111 1111000 00011 101010 100110 11111
-                             |
-                             ⍒
-    blog.wangriyu.wang  最后 11111 用于填充
-    复制代码
-
-#### 二进制编码
-
-现在开始是 HPACK 真正的编解码规范
-
-##### 已索引首部条目表示 (Indexed Header Field Representation)
-
-- `Indexed Header Field`
-
-以 1 开始为标识，能在索引空间匹配到索引的首部会替换成这种形式，后面的 index 使用上述的整数编码方式且 N = 7。 比如 `:method: GET` 可以用 0x82，即 10000010 表示
-
-    +---+---+---+---+---+---+---+---+
-    | 1 |        Index (7+)         |
-    +---+---------------------------+
-    复制代码
-
-![Indexed Header Field](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="459" height="163"></svg>)
-
-##### 未索引文字首部条目表示 (Literal Header Field Representation)
-
-尚未被索引的首部有三种表示形式，第一种会添加进索引，第二种对于当前跳来说不会添加进索引，第三种绝对不被允许添加进索引
-
-1.  会添加索引的文字首部 (Literal Header Field with Incremental Indexing)
-
-以 01 开始为标识，此首部会加入到解码后的首部列表 (Header List) 中并且会把它**作为新条目插入到动态索引表中**
-
-- `Literal Header Field with Incremental Indexing — Indexed Name`
-
-如果字段已经存在索引，但键值未被索引，比如首部 `:authority: blog.wangriyu.wang` 的字段 `:authority` 已存在索引但键值 `blog.wangriyu.wang` 不存在索引，则会替换成如下形式 (index 使用 N=6 的整数编码表示)
-
-    +---+---+---+---+---+---+---+---+
-    | 0 | 1 |      Index (6+)       |
-    +---+---+-----------------------+
-    | H |     Value Length (7+)     |
-    +---+---------------------------+
-    | Value String (Length octets)  |
-    +-------------------------------+
-    复制代码
-
-![Literal Header Field with Incremental Indexing - Indexed Name](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="560" height="181"></svg>)
-
-- `Literal Header Field with Incremental Indexing — New Name`
-
-如果字段和键值均未被索引，比如 `upgrade-insecure-requests: 1`，则会替换成如下形式
-
-    +---+---+---+---+---+---+---+---+
-    | 0 | 1 |           0           |
-    +---+---+-----------------------+
-    | H |     Name Length (7+)      |
-    +---+---------------------------+
-    |  Name String (Length octets)  |
-    +---+---------------------------+
-    | H |     Value Length (7+)     |
-    +---+---------------------------+
-    | Value String (Length octets)  |
-    +-------------------------------+
-    复制代码
-
-![Literal Header Field with Incremental Indexing — New Name](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="538" height="161"></svg>)
-
-2.  不添加索引的首部 (Literal Header Field without Indexing)
-
-以 0000 开始为标识，此首部会加入到解码后的首部列表中，但**不会插入到动态索引表中**
-
-- `Literal Header Field without Indexing — Indexed Name`
-
-如果字段已经存在索引，但键值未被索引，则会替换成如下形式 (index 使用 N=4 的整数编码表示)
-
-    +---+---+---+---+---+---+---+---+
-    | 0 | 0 | 0 | 0 |  Index (4+)   |
-    +---+---+-----------------------+
-    | H |     Value Length (7+)     |
-    +---+---------------------------+
-    | Value String (Length octets)  |
-    +-------------------------------+
-    复制代码
-
-![Literal Header Field without Indexing - Indexed Name](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="518" height="190"></svg>)
-
-- `Literal Header Field without Indexing — New Name`
-
-如果字段和键值均未被索引，则会替换成如下形式。比如 `strict-transport-security: max-age=63072000; includeSubdomains`
-
-    +---+---+---+---+---+---+---+---+
-    | 0 | 0 | 0 | 0 |       0       |
-    +---+---+-----------------------+
-    | H |     Name Length (7+)      |
-    +---+---------------------------+
-    |  Name String (Length octets)  |
-    +---+---------------------------+
-    | H |     Value Length (7+)     |
-    +---+---------------------------+
-    | Value String (Length octets)  |
-    +-------------------------------+
-    复制代码
-
-![Literal Header Field without Indexing - New Name](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="497" height="375"></svg>)
-
-3.  绝对不添加索引的首部 (Literal Header Field Never Indexed)
-
-这与上一种首部类似，只是标识为 0001，首部也是会添加进解码后的首部列表中但不会插入动态更新表。
-
-区别在于这类首部发出是什么格式表示，接收也是一样的格式，作用于每一跳 (hop)，如果中间通过代理，代理必须原样转发不能另行编码。
-
-而上一种首部只是作用当前跳，通过代理后可能会被重新编码
-
-golang 实现中使用一个 `Sensitive` 标明哪些字段是绝对不添加索引的: [golang.org/x/net/http2…](https://link.juejin.im?target=https%3A%2F%2Fgithub.com%2Fgolang%2Fnet%2Fblob%2Fdb08ff08e8622530d9ed3a0e8ac279f6d4c02196%2Fhttp2%2Fhpack%2Fhpack.go%23L41)
-
-RFC 文档中详细说明了这么做的原因: [Never-Indexed Literals](https://link.juejin.im?target=https%3A%2F%2Fhttpwg.org%2Fspecs%2Frfc7541.html%23never.indexed.literals)
-
-表示形式除了标识其他都跟上一种首部一样:
-
-- `Literal Header Field Never Indexed — Indexed Name`
-
-  +---+---+---+---+---+---+---+---+
-  | 0 | 0 | 0 | 1 | Index (4+) |
-  +---+---+-----------------------+
-  | H | Value Length (7+) |
-  +---+---------------------------+
-  | Value String (Length octets) |
-  +-------------------------------+
-  复制代码
-
-- `Literal Header Field Never Indexed — New Name`
-
-  +---+---+---+---+---+---+---+---+
-  | 0 | 0 | 0 | 1 | 0 |
-  +---+---+-----------------------+
-  | H | Name Length (7+) |
-  +---+---------------------------+
-  | Name String (Length octets) |
-  +---+---------------------------+
-  | H | Value Length (7+) |
-  +---+---------------------------+
-  | Value String (Length octets) |
-  +-------------------------------+
-  复制代码
-
-##### 动态表最大容量更新 (Dynamic Table Size Update)
-
-以 001 开始为标识，作用前面已经提过
-
-    +---+---+---+---+---+---+---+---+
-    | 0 | 0 | 1 |   Max size (5+)   |
-    +---+---------------------------+
-    复制代码
-
-![Literal Header Field without Indexing - Indexed Name](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="815"></svg>)
-
-可以发送 Max Size 为 0 的更新来清空动态索引表
-
-![Literal Header Field without Indexing - Indexed Name](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="462" height="127"></svg>)
-
-#### 实例
-
-RFC 中给出了很多实例 [Examples - RFC 7541](https://link.juejin.im?target=https%3A%2F%2Fhttpwg.org%2Fspecs%2Frfc7541.html%23examples)，推荐看一遍加深理解
 
 ## What then ?
 
-### HTTP/2 演示
-
-[http2.akamai.com/demo](https://link.juejin.im?target=https%3A%2F%2Fhttp2.akamai.com%2Fdemo)
-
-[http2.golang.org/](https://link.juejin.im?target=https%3A%2F%2Fhttp2.golang.org%2F)
-
-网站启用 h2 的前后对比，使用 [WebPageTest](https://link.juejin.im?target=http%3A%2F%2Fwww.webpagetest.org%2F) 做的测试，第一张是 h1，第二张是 h2:
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="815"></svg>)
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="815"></svg>)
-
-### 使用 HTTP/2 建议
-
-nginx 开启 HTTP2 只需在相应的 HTTPS 设置后加上 `http2` 即可
-
-    listen [::]:443 ssl http2 ipv6only=on;
-    listen 443 ssl http2;
-    复制代码
-
-#### 以下几点是 HTTP/1 和 HTTP/2 都同样适用的
-
-1、开启压缩
-
-配置 gzip 等可以使传输内容更小，传输速度更快
-
-例如 nginx 可以再 http 模块中加入以下字段，其他字段和详细解释可以谷歌
-
-        gzip  on; // 开启
-        gzip_min_length 1k;
-        gzip_comp_level 1; // 压缩级别
-        gzip_types text/plain application/javascript application/x-javascript application/octet-stream application/json text/css application/xml text/javascript application/x-httpd-php image/jpeg image/gif image/png font/ttf font/otf image/svg+xml; // 需要压缩的文件类型
-        gzip_vary on;
-        gzip_disable "MSIE [1-6]\.";
-    复制代码
-
-2、使用缓存
-
-给静态资源设置一个缓存期是非常有必要的，关于缓存见另一篇博文 `HTTP Message`
-
-例如 nginx 在 server 模块中添加以下字段可以设置缓存时间
-
-     location ~* ^.+\.(ico|gif|jpg|jpeg|png|moc|mtn|mp3|mp4|mov)$ {
-       access_log   off;
-       expires      30d;
-     }
-
-     location ~* ^.+\.(css|js|txt|xml|swf|wav|json)$ {
-       access_log   off;
-       expires      5d;
-     }
-
-     location ~* ^.+\.(html|htm)$ {
-       expires      24h;
-     }
-
-     location ~* ^.+\.(eot|ttf|otf|woff|svg)$ {
-       access_log   off;
-       expires 30d;
-     }
-    复制代码
-
-3、CDN 加速
-
-CDN 的好处是就近访问，延迟低，访问快
-
-4、减少 DNS 查询
-
-每个域名都需要 DNS 查询，一般需要几毫秒到几百毫秒，移动环境下会更慢。DNS 解析完成之前，请求会被阻塞。减少 DNS 查询也是优化项之一
-
-浏览器的 [DNS Prefetching](https://link.juejin.im?target=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FLink_prefetching) 技术也是一种优化手段
-
-5、减少重定向
-
-重定向可能引入新的 DNS 查询、新的 TCP 连接以及新的 HTTP 请求，所以减少重定向也很重要。
-
-浏览器基本都会缓存通过 301 Moved Permanently 指定的跳转，所以对于永久性跳转，可以考虑使用状态码 301。对于启用了 HTTPS 的网站，配置 HSTS 策略，也可以减少从 HTTP 到 HTTPS 的重定向
-
-#### 但以下几点就不推荐在 HTTP/2 中用了
-
-1、域名分片
-
-HTTP/2 对于同一域名使用一个 TCP 连接足矣，过多 TCP 连接浪费资源而且效果不见得一定好
-
-而且资源分域会破坏 HTTP/2 的优先级特性，还会降低头部压缩效果
-
-2、资源合并
-
-资源合并会不利于缓存机制，而且单文件过大对于 HTTP/2 的传输不好，尽量做到细粒化更有利于 HTTP/2 传输
-
-3、资源内联
-
-HTTP/2 支持 Server-Push，相比较内联优势更大效果更好
-
-而且内联的资源不能有效缓存
-
-如果有共用，多页面内联也会造成浪费
-
-#### HTTP/2 最佳实践
-
-使用 HTTP/2 尽可能用最少的连接，因为同一个连接上产生的请求和响应越多，动态字典积累得越全，头部压缩效果也就越好，而且多路复用效率高，不会像多连接那样造成资源浪费
-
-为此需要注意以下两点:
-
-- 同一域名下的资源使用同一个连接，这是 HTTP/2 的特性
-- 不同域名下的资源，如果满足能解析到同一 IP 或者使用的是同一个证书(比如泛域名证书)，HTTP/2 可以合并多个连接
-
-所以使用相同的 IP 和证书部署 Web 服务是目前最好的选择，因为这让支持 HTTP/2 的终端可以复用同一个连接，实现 HTTP/2 协议带来的好处；而只支持 HTTP/1.1 的终端则会不同域名建立不同连接，达到同时更多并发请求的目的
-
-比如 Google 一系列网站都是用的同一个证书:
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="267"></svg>)
-
-但是这好像也会造成一个问题，我使用 nginx 搭建的 webserver，有三个虚拟主机，它们共用一套证书，其中两个我显示地配置了 http2，而剩下一个我并没有配置 http2，结果我访问未配置 http2 的站点时也变成了 http2。
-
-### 大图片传输碰到的问题
-
-先比较一下 h1 和 h2 的页面加载时间，图中绿色代表发起请求收到响应等待负载的时间，蓝色代表下载负载的时间:
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="814"></svg>)
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="814"></svg>)
-
-可以发现 h2 加载时间还比 h1 慢一点，特别是碰到大图片时差别更明显
-
-这篇文章对不同场景下 h1 和 h2 加载图片做了测试: [Real–world HTTP/2: 400gb of images per day](https://link.juejin.im?target=https%3A%2F%2F99designs.com%2Ftech-blog%2Fblog%2F2016%2F07%2F14%2Freal-world-http-2-400gb-of-images-per-day%2F)
-
-其结果是:
-
-- 对一个典型的富图像，延迟限制 (latency–bound) 的界面来说。使用一个高速，低延迟的连接，视觉完成度 (visual completion) 平均会快 5%。
-
-- 对一个图像极其多，带宽限制 (bandwidth–bound) 的页面来说。使用同样的连接，视觉完成度平均将会慢 5–10%，但页面的整体加载时间实际是减少了，因为得益于连接延迟少。
-
-- 一个高延迟，低速度的连接(比如移动端的慢速 3G) 会对页面的视觉完成造成极大的延迟，但 h2 的视觉完成度明显更高更好。
-
-在所有的测试中，都可以看到: h2 使整体页面的加载速度提高了，并且在初次绘制 (initial render) 上做的更好，虽然第二种情况中视觉完成度略微下降，但总体效果还是好的
-
-视觉完成度下降的原因是因为没有 HTTP/1.x 同时连接数量的限制，h2 可以同时发起多张图片的请求，服务器可以同时响应图片的负载，可以从下面的动图中看到
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="484"></svg>)
-
-一旦图片下载完成，浏览器就会绘制出它们，然而，小图片下载后会渲染地更快，但是如果一个大图片恰好是初始的视图，那就会花费较长的时间加载，延迟视觉上的完成度。
-
-#### chrome bug
-
-上面的动图是在 Safari 上的测试结果，图片最后都下载成功了，而我在 Chrome 上测试时后面的部分图片直接挂了，都报 `ERR_SPDY_PROTOCOL_ERROR` 错误，而且是百分百复现
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="634"></svg>)
-
-去看了下 `ERR_SPDY_PROTOCOL_ERROR` 出在哪，发现是 Server reset stream，应该是哪出错了导致流提前终止
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="695"></svg>)
-
-然后再研究了一下 HTTP/2 的帧序列，发出的请求都在 629 号消息中响应成功了，但是返回的数据帧只有流 15 上的，实际收到的图片又不止流 15 对应的图片，这是为什么?
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="815"></svg>)
-
-后面我继续测试发现连续请求几张大图片，虽然 HEADERS 帧都打开的是不同的流，返回的响应的 HEADERS 帧也还是对应前面的流 ID，但是响应的 DATA 帧都是从第一个打开的流上返回的。
-
-如果是小图片的话，一个请求响应过后这个流就关闭了，下一张小图是在其自己对应的流上返回的。只有连续几张大图会出现上述情形，这个机制很奇怪，我暂时还没有找到解释的文档。
-
-至于 chrome 为什么出错呢，看一下 TCP 报文就会发现所有数据在一个连接上发送，到后面 TCP 包会出现各种问题，丢包、重传、失序、重包等等，不清楚 Safari 是否也是这样，因为 wireshark 只能解 chrome 的包解不了 Safari 的包
-
-![image](data:image/svg+xml;utf8,<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="1280" height="815"></svg>)
-
-> 《web 性能权威指南》中提及 HTTP/2 中一个 TCP 可能会造成的问题: 虽然消除了 HTTP 队首阻塞现象，但 TCP 层次上仍存在队首阻塞问题；如果 TCP 窗口缩放被禁用，那[带宽延迟积效应](https://link.juejin.im?target=https%3A%2F%2Fzh.wikipedia.org%2Fwiki%2F%25E5%25B8%25A6%25E5%25AE%25BD%25E6%2597%25B6%25E5%25BB%25B6%25E4%25B9%2598%25E7%25A7%25AF)可能会限制连接的吞吐量；丢包时 TCP 拥塞窗口会缩小；
-
-TCP 是一方面原因，还有另一方面应该是浏览器策略问题，估计也是 chrome bug，对比两张动图你会发现，safari 接收负载是轮流接收，我们几个接收一点然后换几个人接收，直到所有都接受完；而 chrome 则是按顺序接收，这个接收完才轮到下一个接收，结果后面的图片可能长时间未响应就挂了。
-
-#### 使用渐进式图片
-
-渐进式 jpg 代替普通 jpg 有利于提高视觉完成度，而且文件更小:
-
-输入 `convert --version` 看看是否已安装 [ImageMagic](https://link.juejin.im?target=http%3A%2F%2Fwww.imagemagick.org%2F)，如果没有先安装: Mac 可以用 `brew install imagemagick`，Centos 可以用 `yum install imagemagick`
-
-检测是否为 progressive jpeg，如果输出 None 说明不是 progressive jpeg；如果输出 JPEG 说明是 progressive jpeg:
-
-    $ identify -verbose filename.jpg | grep Interlace
-    复制代码
-
-将 basic jpeg 转换成 progressive jpeg，[interlace 参数](https://link.juejin.im?target=https%3A%2F%2Fwww.imagemagick.org%2Fscript%2Fcommand-line-options.php%23interlace):
-
-    $ convert -strip -interlace Plane source.jpg destination.jpg // 还可以指定质量 -quality 90
-
-    // 批量处理
-    $ for i in ./*.jpg; do convert -strip -interlace Plane $i $i; done
-    复制代码
-
-也可以转换 PNG 和 GIF，但是我试过 `convert -strip -interlace Plane source.png destination.png` 但转换后的图片往往会更大，不推荐这么用，可以 convert source.png destination.jpg
-
-ImageMagic 还有很多强大的功能
-
-    // 图片缩放
-    $ convert -resize 50%x50% source.jpg destination.jpg
-    // 图片格式转换
-    $ convert source.jpg destination.png
-    // 配合 find 命令，将当前目录下大于 100kb 的图片按 75% 质量进行压缩
-    $ find -E . -iregex '.*\.(jpg|png|bmp)' -size +100k -exec convert -strip +profile “*” -quality 75 {} {} \;
-    复制代码
-
-png 压缩推荐使用 [pngquant](https://link.juejin.im?target=https%3A%2F%2Fpngquant.org%2F)
-
-另外 photoshop 保存图片时也可以设置渐进或交错:
-
-渐进式图片：选择图片格式为 JPEG => 选中“连续”
-
-交错式图片：选择图片格式为 PNG/GIF => 选中“交错”
-
-### SPDY 与 HTTP2 的关系
-
-[SPDY](https://link.juejin.im?target=https%3A%2F%2Fzh.wikipedia.org%2Fwiki%2FSPDY) 是 HTTP2 的前身，大部分特性与 HTTP2 保持一致，包括服务器端推送，多路复用和帧作为传输的最小单位。但 SPDY 与 HTTP2 也有一些实现上的不同，比如 SPDY 的头部压缩使用的是 DEFLATE 算法，而 HTTP2 使用的是 HPACK 算法，压缩率更高。
 
 ### QUIC 协议
 
@@ -1438,7 +718,5 @@ QUIC 可以创建更低延迟的连接，并且也像 HTTP/2 一样，通过仅�
 QUIC 现在还只有 Google 的 Chrome 和它后台服务器上的实现，虽然有第三方库 libquic，但这些代码仍然很难在其他地方被复用。该协议也被 IETF 通信工作组引入了草案。
 
 [Caddy](https://link.juejin.im?target=https%3A%2F%2Fgithub.com%2Fmholt%2Fcaddy): 基于 Go 语言开发的 Web Server， 对 HTTP/2 和 HTTPS 有着良好的支持，也开始支持 QUIC 协议 (试验性)
-
-
 
 
