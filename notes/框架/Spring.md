@@ -8,6 +8,7 @@
   * [Spring事务的传播级别](#spring%E4%BA%8B%E5%8A%A1%E7%9A%84%E4%BC%A0%E6%92%AD%E7%BA%A7%E5%88%AB)
   * [Spring MVC](#spring-mvc)
   * [Spring中设计模式](#spring%E4%B8%AD%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F)
+  * [Spring解决循环依赖](https://segmentfault.com/a/1190000015221968)
 * [MyBatis](#mybatis)
   * [\#\{\}和$\{\}的区别](#%E5%92%8C%E7%9A%84%E5%8C%BA%E5%88%AB)
   * [Mybatis动态sql是做什么的？都有哪些动态sql？能简述一下动态sql的执行原理不？](#mybatis%E5%8A%A8%E6%80%81sql%E6%98%AF%E5%81%9A%E4%BB%80%E4%B9%88%E7%9A%84%E9%83%BD%E6%9C%89%E5%93%AA%E4%BA%9B%E5%8A%A8%E6%80%81sql%E8%83%BD%E7%AE%80%E8%BF%B0%E4%B8%80%E4%B8%8B%E5%8A%A8%E6%80%81sql%E7%9A%84%E6%89%A7%E8%A1%8C%E5%8E%9F%E7%90%86%E4%B8%8D)
