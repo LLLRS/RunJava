@@ -39,3 +39,8 @@
 ## 面试
 - [10个最难回答的Java面试题](https://segmentfault.com/a/1190000019962661)
 
+## 链接
+- [CS-Notes](https://github.com/CyC2018/CS-Notes)
+- [JavaGuide](https://github.com/Snailclimb/JavaGuide)
+- [Java-Notes](https://github.com/PansonPanson/Java-Notes)
+- [KnowledgeBase](https://github.com/TransientWang/KnowledgeBase)
