@@ -44,12 +44,16 @@ Spring提供方便的API把具体技术相关的异常转化为一致的unchecke
 
 ### Spring Bean生命周期
 
+bean 是一个被实例化并通过 Spring IoC 容器所管理的对象。
+
 Spring 只帮我们管理单例模式 Bean 的完整生命周期，对于 prototype 的 bean ，Spring
 在创建好交给使用者之后则不会再管理后续的生命周期。流程如下所示：
 
 ![](media/b8c67a9a399aab7ab0d03f39605e5544.png)
 
 Spring的加载流程：https://www.cnblogs.com/xrq730/p/6285358.html
+
+Bean的生命周期： https://www.kancloud.cn/chenshaoqiang/spring/884419
 
 ###  Spring中bean的作用域
 
@@ -95,6 +99,10 @@ Injection，即“依赖注入”：**
 **解决循环依赖：**
 https://blog.csdn.net/u010853261/article/details/77940767*
 
+**依赖注入的三种方式**
+- 构造器注入：
+- setter方式注入：容器通过调用无参构造器或无参static工厂 方法实例化bean之后，调用该bean的setter方法
+- 注解方式注入：\@Autowired  \@Resource
 
 ### Spring AOP
 
