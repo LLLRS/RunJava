@@ -39,6 +39,7 @@
 
 ## 面试
 - [10个最难回答的Java面试题](https://segmentfault.com/a/1190000019962661)
+- [8月份21道最新Java面试题剖析](https://juejin.im/post/5d69055ee51d4561a91850b4)
 
 ## 链接
 - [CS-Notes](https://github.com/CyC2018/CS-Notes)
