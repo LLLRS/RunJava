@@ -71,6 +71,8 @@
 
 ![https://img-blog.csdn.net/20150309140927553](media/4aedb9d9d47f02ec77420699a86f22a7.jpg)
 
+[为什么 Java 线程没有 Running 状态](https://mp.weixin.qq.com/s/tNdUEkLGz9xrSEsRy-Ng-Q)
+
  线程调度
 ------------
 
