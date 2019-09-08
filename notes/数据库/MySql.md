@@ -34,7 +34,7 @@
   * [SQL语句的5个连接概念](#sql%E8%AF%AD%E5%8F%A5%E7%9A%845%E4%B8%AA%E8%BF%9E%E6%8E%A5%E6%A6%82%E5%BF%B5)
   * [索引的最左前缀原则](#%E7%B4%A2%E5%BC%95%E7%9A%84%E6%9C%80%E5%B7%A6%E5%89%8D%E7%BC%80%E5%8E%9F%E5%88%99)
   * [跨库join](#%E8%B7%A8%E5%BA%93join)
-
+* [SQL经典50道](https://zhuanlan.zhihu.com/p/72223558?utm_source=wechat_session&utm_medium=social&utm_oi=668899885558927360)
 
 
 索引
