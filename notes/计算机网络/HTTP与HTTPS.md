@@ -369,6 +369,8 @@ HTTP的生命周期通过Request来界定，也就是一个Request
 Request =
 Response，在HTTP中永远是这样，也就是说一个request只能有一个response。而且这个response也是被动的，不能主动发起。
 
+https://halfrost.com/websocket/#websocket
+
 Restful 
 -------------
 
