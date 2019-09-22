@@ -27,6 +27,7 @@ Java的集合类
   * [迭代器](#%E8%BF%AD%E4%BB%A3%E5%99%A8)
     * [Iterator和ListIterator的区别](#iterator%E5%92%8Clistiterator%E7%9A%84%E5%8C%BA%E5%88%AB)
     * [快速失败(fail\-fast)和安全失败(fail\-safe)的区别](#%E5%BF%AB%E9%80%9F%E5%A4%B1%E8%B4%A5fail-fast%E5%92%8C%E5%AE%89%E5%85%A8%E5%A4%B1%E8%B4%A5fail-safe%E7%9A%84%E5%8C%BA%E5%88%AB)
+  * [Java 8 中的 Streams](https://www.ibm.com/developerworks/cn/java/j-lo-java8streamapi/)
 
 
 
